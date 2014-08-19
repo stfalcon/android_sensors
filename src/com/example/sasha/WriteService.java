@@ -4,11 +4,17 @@ package com.example.sasha;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.media.RingtoneManager;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import java.io.File;
@@ -20,6 +26,7 @@ import java.io.OutputStreamWriter;
  * Created by alexandr on 19.08.14.
  */
 public class WriteService extends Service {
+    private static final int THREE_MINUTES = 1000 * 60 * 3;
     private int NOTIFICATION = 1000;
     private OutputStreamWriter outputStreamWriterA;
     private OutputStreamWriter outputStreamWriterS;
@@ -28,6 +35,10 @@ public class WriteService extends Service {
     public static final int TYPE_A = 0;
     public static final int TYPE_S = 1;
     public static final int TYPE_L = 2;
+
+    public LocationManager locationManager;
+    public MyLocationListener listener;
+    public Location previousBestLocation = null;
 
     @Override
     public void onCreate() {
@@ -56,6 +67,12 @@ public class WriteService extends Service {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        listener = new MyLocationListener();
+        locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 0, 0, listener);
+        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, listener);
     }
 
 
@@ -71,6 +88,10 @@ public class WriteService extends Service {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        if (listener != null) {
+            locationManager.removeUpdates(listener);
+        }
     }
 
 
@@ -78,20 +99,23 @@ public class WriteService extends Service {
      *
      */
     public void writeNewData(String data, int type) {
-        try {
-            switch (type) {
-                case TYPE_A:
-                    outputStreamWriterA.write(data);
-                    break;
-                case TYPE_S:
-                    outputStreamWriterS.write(data);
-                    break;
-                case TYPE_L:
-                    outputStreamWriterL.write(data);
-                    break;
+        if (previousBestLocation != null) {
+            String loc = " lat" + previousBestLocation.getLatitude() + " " + "lon" + previousBestLocation.getLongitude();
+            try {
+                switch (type) {
+                    case TYPE_A:
+                        outputStreamWriterA.write(data + loc);
+                        break;
+                    case TYPE_S:
+                        outputStreamWriterS.write(data + loc);
+                        break;
+                    case TYPE_L:
+                        outputStreamWriterL.write(data + loc);
+                        break;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -128,4 +152,86 @@ public class WriteService extends Service {
             return WriteService.this;
         }
     }
+
+
+    public class MyLocationListener implements LocationListener {
+
+        public void onLocationChanged(final Location loc) {
+            Log.i("Loger", "Location changed");
+            isBetterLocation(loc, previousBestLocation);
+        }
+
+        public void onProviderDisabled(String provider) {
+        }
+
+
+        public void onProviderEnabled(String provider) {
+        }
+
+
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+        }
+
+    }
+
+
+    /**
+     * @param location
+     * @param currentBestLocation
+     * @return
+     */
+    protected boolean isBetterLocation(Location location, Location currentBestLocation) {
+        if (currentBestLocation == null) {
+            previousBestLocation = location;
+            return true;
+        }
+
+        // Check whether the new location fix is newer or older
+        long timeDelta = location.getTime() - currentBestLocation.getTime();
+        boolean isSignificantlyNewer = timeDelta > THREE_MINUTES;
+        boolean isSignificantlyOlder = timeDelta < -THREE_MINUTES;
+        boolean isNewer = timeDelta > 0;
+
+        // If it's been more than two minutes since the current location, use the new location
+        // because the user has likely moved
+        if (isSignificantlyNewer) {
+            return true;
+            // If the new location is more than two minutes older, it must be worse
+        } else if (isSignificantlyOlder) {
+            return false;
+        }
+
+        // Check whether the new location fix is more or less accurate
+        int accuracyDelta = (int) (location.getAccuracy() - currentBestLocation.getAccuracy());
+        boolean isLessAccurate = accuracyDelta > 0;
+        boolean isMoreAccurate = accuracyDelta < 0;
+        boolean isSignificantlyLessAccurate = accuracyDelta > 200;
+
+        // Check if the old and new location are from the same provider
+        boolean isFromSameProvider = isSameProvider(location.getProvider(),
+                currentBestLocation.getProvider());
+
+        // Determine location quality using a combination of timeliness and accuracy
+        if (isMoreAccurate) {
+            return true;
+        } else if (isNewer && !isLessAccurate) {
+            return true;
+        } else if (isNewer && !isSignificantlyLessAccurate && isFromSameProvider) {
+            return true;
+        }
+        return false;
+    }
+
+
+    /**
+     * Checks whether two providers are the same
+     */
+    private boolean isSameProvider(String provider1, String provider2) {
+        if (provider1 == null) {
+            return provider2 == null;
+        }
+        return provider1.equals(provider2);
+    }
+
+
 }
