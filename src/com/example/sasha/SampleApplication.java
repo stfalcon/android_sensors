@@ -8,6 +8,11 @@ import com.example.sasha.connection.ConnectionWrapper;
  * @version 1.0
  */
 public class SampleApplication extends Application {
+    public static final String CONNECTED = "com.example.sasha.CONNECTED";
+    public static final String DATA = "com.example.sasha.DATA";
+    public static final String DEVICE = "device";
+    public static final String STARTED = "started";
+    public static final String SENSOR = "sensor";
     private ConnectionWrapper mConnectionWrapper;
     private static SampleApplication self;
 

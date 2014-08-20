@@ -11,6 +11,7 @@ public class Communication {
   public static final class Connect {
     public static final String TYPE = Connect.class.getName();
     public static final String DEVICE = "device";
+    public static final String DATA = "data";
   }
 
   public static final class ConnectSuccess {
