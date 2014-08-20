@@ -8,36 +8,30 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Environment;
 import android.os.IBinder;
+import android.util.Log;
 import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.text.SimpleDateFormat;
 
 /**
  * Created by user on 19.08.14.
  */
 public class AccelerometerService extends Service implements SensorEventListener {
-    public static final String SERVICE_NAME = "accelerometer_service";
     public static final String EXTRA_COMMAND = "command";
 
     public static final int START_READING_DATA = 0;
     public static final int STOP_READING_DATA = 1;
 
     private SensorManager sensorManager;
-    OutputStream fo;
-
-    /**
-     * Creates an IntentService.  Invoked by your subclass's constructor.
-     */
-    public AccelerometerService() {
-        super();
-    }
+    private OutputStream fo;
+    private long startTime;
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-
         int commandId = intent.getIntExtra(EXTRA_COMMAND, START_READING_DATA);
 
         switch (commandId) {
@@ -50,7 +44,6 @@ public class AccelerometerService extends Service implements SensorEventListener
             default:
                 startReadingData();
         }
-
 
         return super.onStartCommand(intent, flags, startId);
     }
@@ -94,10 +87,24 @@ public class AccelerometerService extends Service implements SensorEventListener
         y = values[1];
         z = values[2];
 
+
+        // write data to file
         String data = time + "\u0020" + String.format("%.3f", x) + "\u0020"
                 + String.format("%.3f", y) + "\u0020" + String.format("%.3f", z) + "\n";
 
         writeToTextFile(data);
+
+
+        //send data to Activity for displaying in fraph
+        Intent intent = new Intent(MyActivity.BROADCAST_RECEIVER_ACTION);
+
+        intent.putExtra(MyActivity.X_EXTRA, x);
+        intent.putExtra(MyActivity.Y_EXTRA, y);
+        intent.putExtra(MyActivity.Z_EXTRA, z);
+
+        intent.putExtra(MyActivity.TIME_EXTRA, time - startTime);
+
+        sendBroadcast(intent);
     }
 
     @Override
@@ -107,7 +114,11 @@ public class AccelerometerService extends Service implements SensorEventListener
 
 
     private void createTextFile() {
-        File textFile = new File(Environment.getExternalStorageDirectory() + File.separator + "accelerometer.txt");
+        startTime = System.currentTimeMillis();
+
+        String fileName = "acc_" + new SimpleDateFormat("d_MM_yyy_HH:mm:ss").format(startTime) + ".txt";
+
+        File textFile = new File(Environment.getExternalStorageDirectory() + File.separator + fileName);
         try {
             textFile.createNewFile();
 
