@@ -98,14 +98,14 @@ public class ConnectActivity extends Activity {
     mButtonConnect = (Button) findViewById(R.id.button_connect);
     mButtonConnect.setEnabled(false);
 
-    ((SampleApplication) getApplication()).createConnectionWrapper(
-        new ConnectionWrapper.OnCreatedListener() {
-          @Override
-          public void onCreated() {
-            mButtonConnect.setEnabled(true);
-          }
-        }
-    );
+      SampleApplication.getInstance().createConnectionWrapper(
+              new ConnectionWrapper.OnCreatedListener() {
+                  @Override
+                  public void onCreated() {
+                      mButtonConnect.setEnabled(true);
+                  }
+              }
+      );
   }
 
   @Override
@@ -148,6 +148,6 @@ public class ConnectActivity extends Activity {
   }
 
   private ConnectionWrapper getConnectionWrapper() {
-    return ((SampleApplication) getApplication()).getConnectionWrapper();
+    return SampleApplication.getInstance().getConnectionWrapper();
   }
 }

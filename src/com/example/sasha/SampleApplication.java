@@ -1,7 +1,6 @@
 package com.example.sasha;
 
 import android.app.Application;
-
 import com.example.sasha.connection.ConnectionWrapper;
 
 /**
@@ -9,20 +8,29 @@ import com.example.sasha.connection.ConnectionWrapper;
  * @version 1.0
  */
 public class SampleApplication extends Application {
-  private ConnectionWrapper mConnectionWrapper;
+    private ConnectionWrapper mConnectionWrapper;
+    private static SampleApplication self;
 
-  @Override
-  public void onCreate() {
-    super.onCreate();
-  }
 
-  public void createConnectionWrapper(ConnectionWrapper.OnCreatedListener listener) {
-    mConnectionWrapper = new ConnectionWrapper(getApplicationContext(), listener);
-  }
+    public static synchronized SampleApplication getInstance() {
+        return self;
+    }
 
-  public ConnectionWrapper getConnectionWrapper() {
-    return mConnectionWrapper;
-  }
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        synchronized (SampleApplication.class) {
+            self = this;
+        }
+    }
+
+    public void createConnectionWrapper(ConnectionWrapper.OnCreatedListener listener) {
+        mConnectionWrapper = new ConnectionWrapper(getApplicationContext(), listener);
+    }
+
+    public ConnectionWrapper getConnectionWrapper() {
+        return mConnectionWrapper;
+    }
 
 
 }

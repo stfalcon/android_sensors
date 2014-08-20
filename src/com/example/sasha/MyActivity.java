@@ -12,7 +12,7 @@ import android.widget.Button;
 
 public class MyActivity extends Activity implements View.OnClickListener {
 
-    private Button start, stop;
+    private Button start, stop, server, client;
     private ServiceConnection sConn;
     private WriteService writeServise;
     private boolean bound;
@@ -27,8 +27,12 @@ public class MyActivity extends Activity implements View.OnClickListener {
         setContentView(R.layout.main);
         start = (Button) findViewById(R.id.start);
         stop = (Button) findViewById(R.id.stop);
+        server = (Button) findViewById(R.id.server);
+        client = (Button) findViewById(R.id.client);
         start.setOnClickListener(this);
         stop.setOnClickListener(this);
+        server.setOnClickListener(this);
+        client.setOnClickListener(this);
 
         intentService = new Intent(this, WriteService.class);
 
@@ -92,6 +96,14 @@ public class MyActivity extends Activity implements View.OnClickListener {
                 if (bound) {
                     writeServise.stopListening();
                 }
+                break;
+
+            case R.id.server:
+                startActivity(new Intent(this, ConnectActivity.class));
+                break;
+
+            case R.id.client:
+
                 break;
 
         }
