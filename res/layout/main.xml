@@ -42,7 +42,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/server"
-            android:text="@string/i_server"/>
+            android:text="@string/i_server"
+            android:visibility="gone"/>
 
     <Button
             android:layout_width="match_parent"
