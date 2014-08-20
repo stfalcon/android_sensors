@@ -3,4 +3,5 @@
     <string name="app_name">sasha</string>
     <string name="start">Start</string>
     <string name="stop">Stop</string>
+    <string name="write">Write to file</string>
 </resources>
