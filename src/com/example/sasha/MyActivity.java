@@ -25,14 +25,15 @@ import java.util.Random;
 public class MyActivity extends Activity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
     private Button start, stop, server, client;
+    private RadioButton accel, lAccel, fAccel;
     private ServiceConnection sConn;
     private WriteService writeServise;
     private boolean bound;
     private Intent intentService;
     private BroadcastReceiver mReceiver;
-    private ProgressDialog dialog;
     private TextView textView;
     private LinearLayout llChart, frame;
+    private boolean pause = false;
 
     private CheckBox cbX, cbY, cbZ, cbSqrt;
 
@@ -55,10 +56,16 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         textView = (TextView) findViewById(R.id.text);
         llChart = (LinearLayout) findViewById(R.id.chart);
         frame = (LinearLayout) findViewById(R.id.frame);
+        accel = (RadioButton) findViewById(R.id.type_a);
+        fAccel = (RadioButton) findViewById(R.id.type_fa);
+        lAccel = (RadioButton) findViewById(R.id.type_la);
         start.setOnClickListener(this);
         stop.setOnClickListener(this);
         server.setOnClickListener(this);
         client.setOnClickListener(this);
+        accel.setOnClickListener(this);
+        fAccel.setOnClickListener(this);
+        lAccel.setOnClickListener(this);
 
         intentService = new Intent(this, WriteService.class);
 
@@ -76,12 +83,13 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             }
         };
 
-        ((Button) findViewById(R.id.clear)).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                clearGraph();
-            }
-        });
+
+        try {
+            findViewById(R.id.clear).setOnClickListener(this);
+            findViewById(R.id.pause).setOnClickListener(this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 
@@ -179,15 +187,35 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                 case R.id.server:
                     //startActivity(new Intent(this, ConnectActivity.class));
                     writeServise.startServer();
-                    dialog = new ProgressDialog(this);
-                    dialog.setMessage("Start server...");
-                    dialog.show();
                     break;
 
                 case R.id.client:
                     writeServise.connect();
                     break;
+                case R.id.pause:
+                    if (pause){
+                        pause = false;
+                    } else {
+                        pause = true;
+                    }
 
+                    ((Button) findViewById(R.id.pause)).setText(pause ? "Start" : "Pause");
+                    break;
+                case R.id.clear:
+                    clearGraph();
+                    break;
+
+                case R.id.type_a:
+                    SampleApplication.getInstance().setSendetType(WriteService.TYPE_A);
+                    break;
+
+                case R.id.type_fa:
+                    SampleApplication.getInstance().setSendetType(WriteService.TYPE_F);
+                    break;
+
+                case R.id.type_la:
+                    SampleApplication.getInstance().setSendetType(WriteService.TYPE_L);
+                    break;
             }
         }
     }
@@ -237,13 +265,13 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     renderer.setXAxisMin(System.currentTimeMillis() - 10000);
                     renderer.setXAxisMax(System.currentTimeMillis() + 500);
 
-                    graphicalView.repaint();
+                    if (!pause)
+                        graphicalView.repaint();
                     return;
                 }
 
 
                 if (intent.hasExtra(SampleApplication.STARTED)) {
-                    dialog.dismiss();
                     textView.setText("Start listening... \n");
                     //startActivity(new Intent(MyActivity.this, GraphicActivity.class));
                     return;
@@ -302,64 +330,67 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     }
 
     private void createSeriesAndRendersForNewDevice(DeviceGraphInformation information){
-        org.achartengine.renderer.XYSeriesRenderer r = new org.achartengine.renderer.XYSeriesRenderer();
-        r.setColor(Color.BLUE + 100 * devices.size());
-        r.setPointStyle(PointStyle.SQUARE);
-        r.setFillPoints(true);
+        try {
+            XYSeriesRenderer r = new XYSeriesRenderer();
+            r.setColor(Color.BLUE + 100 * devices.size());
+            r.setPointStyle(PointStyle.SQUARE);
+            r.setFillPoints(true);
 
-        information.xSeriesRenderer = r;
-
-
-
-        r = new org.achartengine.renderer.XYSeriesRenderer();
-        r.setPointStyle(PointStyle.TRIANGLE);
-        r.setFillPoints(true);
-        r.setColor(getRandomColor());
-
-        information.ySeriesRenderer = r;
-
-        r = new org.achartengine.renderer.XYSeriesRenderer();
-        r.setColor(getRandomColor());
-        r.setPointStyle(PointStyle.DIAMOND);
-        r.setFillPoints(true);
-
-        information.zSeriesRenderer = r;
-
-        r = new org.achartengine.renderer.XYSeriesRenderer();
-        r.setColor(getRandomColor());
-        r.setPointStyle(PointStyle.CIRCLE);
-        r.setFillPoints(true);
-
-        information.sqrSeriesRenderer = r;
+            information.xSeriesRenderer = r;
 
 
-        String name = information.device;
+            r = new XYSeriesRenderer();
+            r.setPointStyle(PointStyle.TRIANGLE);
+            r.setFillPoints(true);
+            r.setColor(getRandomColor());
 
-        XYValueSeries xSeries = new XYValueSeries(name + "-X");
-        XYValueSeries ySeries = new XYValueSeries(name + "-Y");
-        XYValueSeries zSeries = new XYValueSeries(name + "-Z");
-        XYValueSeries sqrSeries = new XYValueSeries(name + "-sqr");
+            information.ySeriesRenderer = r;
 
-        information.xSeries = xSeries;
-        information.ySeries = ySeries;
-        information.zSeries = zSeries;
-        information.sqrSeries = sqrSeries;
+            r = new XYSeriesRenderer();
+            r.setColor(getRandomColor());
+            r.setPointStyle(PointStyle.DIAMOND);
+            r.setFillPoints(true);
 
-        if (cbX.isChecked()){
-            renderer.addSeriesRenderer(information.xSeriesRenderer);
-            dataSet.addSeries(devices.size(), xSeries);
-        }
-        if (cbY.isChecked()){
-            renderer.addSeriesRenderer(information.ySeriesRenderer);
-            dataSet.addSeries(devices.size(), ySeries);
-        }
-        if (cbZ.isChecked()){
-            renderer.addSeriesRenderer(information.zSeriesRenderer);
-            dataSet.addSeries(devices.size(), zSeries);
-        }
-        if (cbSqrt.isChecked()){
-            renderer.addSeriesRenderer(information.sqrSeriesRenderer);
-            dataSet.addSeries(devices.size(), sqrSeries);
+            information.zSeriesRenderer = r;
+
+            r = new XYSeriesRenderer();
+            r.setColor(getRandomColor());
+            r.setPointStyle(PointStyle.CIRCLE);
+            r.setFillPoints(true);
+
+            information.sqrSeriesRenderer = r;
+
+
+            String name = information.device;
+
+            XYValueSeries xSeries = new XYValueSeries(name + "-X");
+            XYValueSeries ySeries = new XYValueSeries(name + "-Y");
+            XYValueSeries zSeries = new XYValueSeries(name + "-Z");
+            XYValueSeries sqrSeries = new XYValueSeries(name + "-sqr");
+
+            information.xSeries = xSeries;
+            information.ySeries = ySeries;
+            information.zSeries = zSeries;
+            information.sqrSeries = sqrSeries;
+
+            if (cbX.isChecked()){
+                renderer.addSeriesRenderer(information.xSeriesRenderer);
+                dataSet.addSeries(devices.size(), xSeries);
+            }
+            if (cbY.isChecked()){
+                renderer.addSeriesRenderer(information.ySeriesRenderer);
+                dataSet.addSeries(devices.size(), ySeries);
+            }
+            if (cbZ.isChecked()){
+                renderer.addSeriesRenderer(information.zSeriesRenderer);
+                dataSet.addSeries(devices.size(), zSeries);
+            }
+            if (cbSqrt.isChecked()){
+                renderer.addSeriesRenderer(information.sqrSeriesRenderer);
+                dataSet.addSeries(devices.size(), sqrSeries);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

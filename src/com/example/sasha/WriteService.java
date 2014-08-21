@@ -47,6 +47,7 @@ public class WriteService extends Service implements SensorEventListener {
     public static final int TYPE_A = 0;   // ACCELEROMETER
     public static final int TYPE_F = 1;   // FILTRATE_ACCELEROMETER
     public static final int TYPE_L = 2;   // LINEAR_ACCELERATION
+    private int activSensorType;
 
     private SensorManager sensorManager;
     public LocationManager locationManager;
@@ -63,7 +64,7 @@ public class WriteService extends Service implements SensorEventListener {
                 new ConnectionWrapper.OnCreatedListener() {
                     @Override
                     public void onCreated() {
-                        //createdConnectionWrapper = true;
+                        createdConnectionWrapper = true;
                     }
                 }
         );
@@ -77,6 +78,7 @@ public class WriteService extends Service implements SensorEventListener {
 
     public void startListening() {
         //startService(new Intent(this, WriteService.class));
+        activSensorType = SampleApplication.getInstance().getSendedType();
         startForeground(NOTIFICATION, makeNotification());
         Log.v("Loger", "START_DONE");
 
@@ -138,6 +140,8 @@ public class WriteService extends Service implements SensorEventListener {
             outputStreamWriterGPS.close();
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (NullPointerException e){
+            e.printStackTrace();
         }
 
         if (listener != null) {
@@ -152,7 +156,7 @@ public class WriteService extends Service implements SensorEventListener {
     public void writeNewData(long time, final String data, int type) {
 
         if(createdConnectionWrapper){
-             if (type == TYPE_L) {
+             if (type == activSensorType) {
                  getConnectionWrapper().send(
                          new HashMap<String, String>() {{
                              put(Communication.MESSAGE_TYPE, Communication.Connect.DATA);
