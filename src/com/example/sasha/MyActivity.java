@@ -20,6 +20,7 @@ import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 public class MyActivity extends Activity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
 
@@ -198,7 +199,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     String data = intent.getStringExtra(SampleApplication.SENSOR);
                     String[] arr = data.split(" ", 4);
 
-                    long time = Long.valueOf(arr[0]);
+                    //long time = Long.valueOf(arr[0]);
+                    long time = System.currentTimeMillis();
                     float x = Float.valueOf(arr[1]);
                     float y = Float.valueOf(arr[2]);
                     float z = Float.valueOf(arr[3]);
@@ -218,8 +220,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     information.zSeries.add(time, z);
                     information.sqrSeries.add(time, Math.sqrt(x * x + y * y + z * z));
 
-                    renderer.setXAxisMin(time - 10000);
-                    renderer.setXAxisMax(time + 100);
+                    renderer.setXAxisMin(System.currentTimeMillis() - 10000);
+                    renderer.setXAxisMax(System.currentTimeMillis() + 500);
 
                     graphicalView.repaint();
                     return;
@@ -263,7 +265,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         renderer.setChartTitleTextSize(20);
         renderer.setLabelsTextSize(15);
         renderer.setLegendTextSize(15);
-        renderer.setPointSize(5f);
+        renderer.setPointSize(2f);
         renderer.setMargins(new int[]{20, 30, 15, 0});
 
         renderer.setZoomButtonsVisible(true);
@@ -289,25 +291,30 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         org.achartengine.renderer.XYSeriesRenderer r = new org.achartengine.renderer.XYSeriesRenderer();
         r.setColor(Color.BLUE + 100 * devices.size());
         r.setPointStyle(PointStyle.SQUARE);
+        r.setFillPoints(true);
 
         information.xSeriesRenderer = r;
 
+
+
         r = new org.achartengine.renderer.XYSeriesRenderer();
-        r.setPointStyle(PointStyle.CIRCLE);
-        r.setColor(Color.GREEN + 100 * devices.size());
+        r.setPointStyle(PointStyle.TRIANGLE);
         r.setFillPoints(true);
+        r.setColor(getRandomColor());
 
         information.ySeriesRenderer = r;
 
         r = new org.achartengine.renderer.XYSeriesRenderer();
+        r.setColor(getRandomColor());
         r.setPointStyle(PointStyle.DIAMOND);
-        r.setColor(Color.YELLOW + 100 * devices.size());
+        r.setFillPoints(true);
 
         information.zSeriesRenderer = r;
 
         r = new org.achartengine.renderer.XYSeriesRenderer();
-        r.setPointStyle(PointStyle.TRIANGLE);
-        r.setColor(Color.RED + 100 * devices.size());
+        r.setColor(getRandomColor());
+        r.setPointStyle(PointStyle.CIRCLE);
+        r.setFillPoints(true);
 
         information.sqrSeriesRenderer = r;
 
@@ -340,6 +347,15 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             renderer.addSeriesRenderer(information.sqrSeriesRenderer);
             dataSet.addSeries(devices.size(), sqrSeries);
         }
+    }
+
+    public int getRandomColor(){
+        Random rand = new Random();
+        // Java 'Color' class takes 3 floats, from 0 to 1.
+        int r = rand.nextInt(255);
+        int g = rand.nextInt(255);
+        int b = rand.nextInt(255);
+        return new Color().rgb(r, g, b);
     }
 
     @Override

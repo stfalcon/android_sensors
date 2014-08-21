@@ -31,7 +31,7 @@ public class Connection {
 
   private Server mServer;
   private HashMap<InetAddress, Client> mClients = new HashMap<InetAddress, Client>();
-  private ArrayList<Socket> mSockets;
+  private ArrayList<Socket> mSockets = new ArrayList<Socket>();
   private Handler mHandler;
   private int mPort = -1;
   private ConnectionListener mConnectionListener;
