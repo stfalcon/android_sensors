@@ -14,17 +14,24 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.media.RingtoneManager;
-import android.os.Binder;
-import android.os.Bundle;
-import android.os.IBinder;
+import android.net.wifi.WifiManager;
+import android.os.*;
+import android.provider.Settings;
 import android.support.v4.app.NotificationCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.widget.Toast;
+import com.example.sasha.connection.*;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Random;
 
 /**
  * Created by alexandr on 19.08.14.
@@ -45,15 +52,31 @@ public class WriteService extends Service implements SensorEventListener {
     public LocationManager locationManager;
     public MyLocationListener listener;
     public Location previousBestLocation = null;
+    private boolean createdConnectionWrapper = false;
 
     @Override
     public void onCreate() {
         super.onCreate();
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+
+        SampleApplication.getInstance().createConnectionWrapper(
+                new ConnectionWrapper.OnCreatedListener() {
+                    @Override
+                    public void onCreated() {
+                        //createdConnectionWrapper = true;
+                    }
+                }
+        );
+    }
+
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return Service.START_STICKY;
     }
 
     public void startListening() {
-        startService(new Intent(this, WriteService.class));
+        //startService(new Intent(this, WriteService.class));
         startForeground(NOTIFICATION, makeNotification());
         Log.v("Loger", "START_DONE");
 
@@ -126,7 +149,20 @@ public class WriteService extends Service implements SensorEventListener {
     /**
      *
      */
-    public void writeNewData(long time, String data, int type) {
+    public void writeNewData(long time, final String data, int type) {
+
+        if(createdConnectionWrapper){
+             if (type == TYPE_L) {
+                 getConnectionWrapper().send(
+                         new HashMap<String, String>() {{
+                             put(Communication.MESSAGE_TYPE, Communication.Connect.DATA);
+                             put(Communication.Connect.DEVICE, Build.MODEL + Build.SERIAL);
+                             put(SampleApplication.SENSOR, data);
+                         }}
+                 );
+             }
+        } else {
+
         if (previousBestLocation != null) {
             String loc = " lat" + previousBestLocation.getLatitude() + " " + "lon" + previousBestLocation.getLongitude();
             try {
@@ -147,6 +183,7 @@ public class WriteService extends Service implements SensorEventListener {
                 e.printStackTrace();
             }
         }
+        }
     }
 
 
@@ -163,9 +200,14 @@ public class WriteService extends Service implements SensorEventListener {
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(android.R.drawable.stat_sys_upload)
                         .setContentTitle(getString(R.string.app_name))
-                        .setContentText(getString(R.string.write))
                         .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                         .setContentIntent(contentIntent);
+
+        if (createdConnectionWrapper){
+            mBuilder.setContentText(getString(R.string.send));
+        } else {
+            mBuilder.setContentText(getString(R.string.write));
+        }
 
         mBuilder.setAutoCancel(true);
         return mBuilder.build();
@@ -206,6 +248,8 @@ public class WriteService extends Service implements SensorEventListener {
 
             String dataF = time + " " + linear_acceleration[0] + " " + linear_acceleration[1] + " " + linear_acceleration[2] + "\n";
             String dataA = time + " " + x + " " + y + " " + z + "\n";
+
+            //Log.i("Loger", dataA);
 
             writeNewData(time, dataA, WriteService.TYPE_A);
             writeNewData(time, dataF, WriteService.TYPE_F);
@@ -329,4 +373,131 @@ public class WriteService extends Service implements SensorEventListener {
     }
 
 
+
+
+    // WIFI CONNECTION
+
+    /**
+     *
+     */
+    public void startServer(){
+            WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            int intaddr = wifi.getConnectionInfo().getIpAddress();
+
+            if (wifi.getWifiState() == WifiManager.WIFI_STATE_DISABLED || intaddr == 0) {
+                startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
+            } else {
+                getConnectionWrapper().stopNetworkDiscovery();
+                getConnectionWrapper().startServer();
+                getConnectionWrapper().setHandler(mServerHandler);
+            }
+        Intent intentTracking = new Intent(SampleApplication.CONNECTED);
+        intentTracking.putExtra(SampleApplication.STARTED, true);
+        LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
+        }
+
+    /**
+     *
+     */
+    public void connect() {
+        if (createdConnectionWrapper) {
+            getConnectionWrapper().findServers(new NetworkDiscovery.OnFoundListener() {
+                @Override
+                public void onFound(javax.jmdns.ServiceInfo info) {
+                    if (info != null && info.getInet4Addresses().length > 0) {
+                        getConnectionWrapper().stopNetworkDiscovery();
+                        getConnectionWrapper().connectToServer(
+                                info.getInet4Addresses()[0],
+                                info.getPort(),
+                                mConnectionListener
+                        );
+                        getConnectionWrapper().setHandler(mClientHandler);
+                    }
+                }
+            });
+        }
+    }
+
+
+    /**
+     *
+     */
+    private Connection.ConnectionListener mConnectionListener = new Connection.ConnectionListener() {
+        @Override
+        public void onConnection() {
+            getConnectionWrapper().send(
+                    new HashMap<String, String>() {{
+                        put(Communication.MESSAGE_TYPE, Communication.Connect.DEVICE);
+                        put(Communication.Connect.DEVICE, Build.MODEL);
+                    }}
+            );
+        }
+    };
+
+    /**
+     *
+     */
+    private Handler mServerHandler = new MessageHandler() {
+        @Override
+        public void onMessage(String type, JSONObject message) {
+            try {
+
+
+                if (type.equals(Communication.Connect.DATA)) {
+
+                    //Log.d("Loger", "mServerHandler have data");
+                    final String deviceFrom = message.getString(Communication.Connect.DEVICE);
+                    final String data = message.getString(SampleApplication.SENSOR);
+
+                    Intent intentTracking = new Intent(SampleApplication.CONNECTED);
+                    intentTracking.putExtra(SampleApplication.DEVICE, "Device: " + deviceFrom);
+                    intentTracking.putExtra(SampleApplication.SENSOR, data);
+                    LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
+
+                }
+
+
+                if (type.equals(Communication.Connect.DEVICE)) {
+                    final String deviceFrom = message.getString(Communication.Connect.DEVICE);
+
+                    Intent intentTracking = new Intent(SampleApplication.CONNECTED);
+                    intentTracking.putExtra(SampleApplication.DEVICE, "Device: " + deviceFrom);
+                    LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
+
+                    getConnectionWrapper().send(
+                            new HashMap<String, String>() {{
+                                put(Communication.MESSAGE_TYPE, Communication.ConnectSuccess.TYPE);
+                            }}
+                    );
+                }
+
+
+            } catch (JSONException e) {
+                Log.d("Loger", "JSON parsing exception: " + e);
+            }
+        }
+    };
+
+    private Handler mClientHandler = new MessageHandler() {
+        @Override
+        public void onMessage(String type, JSONObject message) {
+            if (type.equals(Communication.ConnectSuccess.TYPE)) {
+                Intent intentTracking = new Intent(SampleApplication.CONNECTED);
+                LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
+                createdConnectionWrapper = true;
+            }
+        }
+    };
+
+
+    @Override
+    public void onDestroy() {
+        getConnectionWrapper().reset();
+        super.onDestroy();
+    }
+
+    private ConnectionWrapper getConnectionWrapper() {
+        return SampleApplication.getInstance().getConnectionWrapper();
+    }
 }
+
