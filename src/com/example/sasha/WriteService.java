@@ -62,7 +62,7 @@ public class WriteService extends Service implements SensorEventListener {
                 new ConnectionWrapper.OnCreatedListener() {
                     @Override
                     public void onCreated() {
-                        createdConnectionWrapper = true;
+                        //createdConnectionWrapper = true;
                     }
                 }
         );
