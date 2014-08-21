@@ -15,6 +15,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -28,7 +30,7 @@ public class Connection {
   private static final String DEBUG_TAG = Connection.class.getName();
 
   private Server mServer;
-  private Client mClient;
+  private HashMap<InetAddress, Client> mClients = new HashMap<InetAddress, Client>();
   private Socket mSocket;
   private Handler mHandler;
   private int mPort = -1;
@@ -57,7 +59,9 @@ public class Connection {
    * @param port    server port
    */
   public void connectToServer(InetAddress address, int port) {
-    mClient = new Client(address, port);
+
+      Client client = new Client(address, port);
+      mClients.put(address, client);
   }
 
   /**
@@ -67,8 +71,9 @@ public class Connection {
     if (mServer != null) {
       mServer.closeConnection();
     }
-    if (mClient != null) {
-      mClient.closeConnection();
+    if (mClients != null) {
+        for (InetAddress address : mClients.keySet())
+      mClients.get(address).closeConnection();
     }
   }
 
@@ -99,8 +104,9 @@ public class Connection {
    * @param msg message string
    */
   public void sendMessage(String msg) {
-    if (mClient != null) {
-      mClient.sendMessage(msg);
+    if (mClients != null) {
+        for (InetAddress address : mClients.keySet())
+            mClients.get(address).sendMessage(msg);
     }
   }
 
