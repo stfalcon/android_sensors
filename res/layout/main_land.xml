@@ -64,7 +64,37 @@
             android:id="@+id/text"
             android:layout_toRightOf="@+id/server"/>
 
-
+    <RadioGroup
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true">
+        <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="X"
+                android:checked="true"
+                android:id="@+id/rb_x"/>
+        <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Y"
+                android:checked="true"
+                android:id="@+id/rb_y"/>
+        <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Z"
+                android:checked="true"
+                android:id="@+id/rb_z"/>
+        <CheckBox
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Sqrt"
+                android:checked="true"
+                android:id="@+id/rb_sqrt"/>
+    </RadioGroup>
 
 
 </RelativeLayout>
