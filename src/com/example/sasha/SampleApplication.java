@@ -1,6 +1,8 @@
 package com.example.sasha;
 
 import android.app.Application;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
 import com.example.sasha.connection.ConnectionWrapper;
 
 /**
@@ -13,8 +15,10 @@ public class SampleApplication extends Application {
     public static final String DEVICE = "device";
     public static final String STARTED = "started";
     public static final String SENSOR = "sensor";
+    public static final String SENSOR_TYPE = "sensor_type";
     private ConnectionWrapper mConnectionWrapper;
     private static SampleApplication self;
+    private SharedPreferences sharedPreferences;
 
 
     public static synchronized SampleApplication getInstance() {
@@ -27,6 +31,7 @@ public class SampleApplication extends Application {
         synchronized (SampleApplication.class) {
             self = this;
         }
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
     }
 
     public void createConnectionWrapper(ConnectionWrapper.OnCreatedListener listener) {
@@ -38,4 +43,12 @@ public class SampleApplication extends Application {
     }
 
 
+    public void setSendetType(int type){
+        sharedPreferences.edit().putInt(SENSOR_TYPE, type).commit();
+    }
+
+
+    public int getSendedType(){
+        return sharedPreferences.getInt(SENSOR_TYPE, 0);
+    }
 }

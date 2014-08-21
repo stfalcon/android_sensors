@@ -15,7 +15,6 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -31,7 +30,7 @@ public class Connection {
 
   private Server mServer;
   private HashMap<InetAddress, Client> mClients = new HashMap<InetAddress, Client>();
-  private ArrayList<Socket> mSockets = new ArrayList<Socket>();
+  private Socket mSocket;
   private Handler mHandler;
   private int mPort = -1;
   private ConnectionListener mConnectionListener;
@@ -114,20 +113,20 @@ public class Connection {
     if (socket == null) {
       Log.d(DEBUG_TAG, "Setting a null socket.");
     }
-    if (mSockets != null) {
-      /*if (mSockets.isConnected()) {
+    if (mSocket != null) {
+      /*if (mSocket.isConnected()) {
         try {
-          mSockets.close();
+          mSocket.close();
         } catch (IOException e) {
           Log.d(DEBUG_TAG, "IOException while closing socket: " + e);
         }
       }*/
     }
-    mSockets.add(socket);
+    mSocket = socket;
   }
 
   private Socket getSocket() {
-    return mSockets.get(mSockets.size() - 1);
+    return mSocket;
   }
 
   private synchronized void updateMessages(String msg, boolean local) {
@@ -155,7 +154,7 @@ public class Connection {
 
             while (!Thread.currentThread().isInterrupted()) {
               setSocket(mServerSocket.accept());
-              connectToServer(mSockets.get(mSockets.size() - 1).getInetAddress(), mSockets.get(mSockets.size() - 1).getPort());
+              connectToServer(mSocket.getInetAddress(), mSocket.getPort());
             }
           } catch (IOException e) {
             Log.d(DEBUG_TAG, "Server IOException: " + e);
@@ -293,7 +292,7 @@ public class Connection {
         BufferedReader input;
         try {
           input = new BufferedReader(new InputStreamReader(
-              mSockets.get(mSockets.size() - 1).getInputStream()));
+              mSocket.getInputStream()));
           while (!Thread.currentThread().isInterrupted()) {
             String messageStr = null;
             messageStr = input.readLine();

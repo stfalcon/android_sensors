@@ -10,12 +10,35 @@
             android:orientation="vertical"
             android:visibility="visible"/>
 
+
+
     <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:id="@+id/frame"
             android:visibility="gone">
+
+        <RadioGroup android:layout_width="match_parent" android:layout_height="wrap_content">
+
+
+            <RadioButton android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:id="@+id/type_a"
+                         android:checked="true"
+                         android:text="ACCELEROMETER"/>
+
+            <RadioButton android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:id="@+id/type_fa"
+                         android:text="FILTRATE_ACCELEROMETER"/>
+
+            <RadioButton android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:id="@+id/type_la"
+                         android:text="LINEAR_ACCELERATION"/>
+
+        </RadioGroup>
 
     <TextView
             android:layout_width="match_parent"
@@ -52,6 +75,22 @@
             android:text="Start server"/>
 
     <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/clear"
+            android:layout_toRightOf="@+id/server"
+            android:layout_marginLeft="10dp"
+            android:text="Clear"/>
+
+    <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/pause"
+            android:layout_toRightOf="@+id/clear"
+            android:layout_marginLeft="10dp"
+            android:text="Pause"/>
+
+    <Button
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:id="@+id/client"
@@ -62,8 +101,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/text"
-            android:layout_toRightOf="@+id/server"
-            android:layout_alignRight="@+id/server"/>
+            android:layout_below="@+id/server"/>
 
     <RadioGroup
             android:layout_width="wrap_content"
