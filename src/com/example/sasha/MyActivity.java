@@ -33,13 +33,13 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private ProgressDialog dialog;
     private TextView textView;
     private LinearLayout llChart, frame;
-    private GraphicalView graphicalView;
-    private XYMultipleSeriesDataset dataSet;
-    XYMultipleSeriesRenderer renderer;
 
     private CheckBox cbX, cbY, cbZ, cbSqrt;
 
     ArrayList<DeviceGraphInformation> devices = new ArrayList<DeviceGraphInformation>();
+    private GraphicalView graphicalView;
+    private XYMultipleSeriesDataset dataSet = new XYMultipleSeriesDataset();
+    private XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
 
     /**
      * Called when the activity is first created.
@@ -76,6 +76,12 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             }
         };
 
+        ((Button) findViewById(R.id.clear)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                clearGraph();
+            }
+        });
     }
 
 
@@ -119,6 +125,14 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         }
     }
 
+    private void clearGraph(){
+        if (graphicalView.isChartDrawn()){
+            renderer.removeAllRenderers();
+            dataSet.clear();
+            devices.clear();
+            graphicalView.repaint();
+        }
+    }
 
     private void setContentBasedOnLayout() {
         WindowManager winMan = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
