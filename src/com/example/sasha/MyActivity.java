@@ -287,27 +287,27 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
     private void createSeriesAndRendersForNewDevice(DeviceGraphInformation information){
         org.achartengine.renderer.XYSeriesRenderer r = new org.achartengine.renderer.XYSeriesRenderer();
-        r.setColor(Color.BLUE);
+        r.setColor(Color.BLUE + 100 * devices.size());
         r.setPointStyle(PointStyle.SQUARE);
 
         information.xSeriesRenderer = r;
 
         r = new org.achartengine.renderer.XYSeriesRenderer();
         r.setPointStyle(PointStyle.CIRCLE);
-        r.setColor(Color.GREEN);
+        r.setColor(Color.GREEN + 100 * devices.size());
         r.setFillPoints(true);
 
         information.ySeriesRenderer = r;
 
         r = new org.achartengine.renderer.XYSeriesRenderer();
         r.setPointStyle(PointStyle.DIAMOND);
-        r.setColor(Color.YELLOW);
+        r.setColor(Color.YELLOW + 100 * devices.size());
 
         information.zSeriesRenderer = r;
 
         r = new org.achartengine.renderer.XYSeriesRenderer();
         r.setPointStyle(PointStyle.TRIANGLE);
-        r.setColor(Color.RED);
+        r.setColor(Color.RED + 100 * devices.size());
 
         information.sqrSeriesRenderer = r;
 

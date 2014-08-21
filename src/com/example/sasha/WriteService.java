@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.Random;
 
 /**
  * Created by alexandr on 19.08.14.
@@ -155,7 +156,7 @@ public class WriteService extends Service implements SensorEventListener {
                  getConnectionWrapper().send(
                          new HashMap<String, String>() {{
                              put(Communication.MESSAGE_TYPE, Communication.Connect.DATA);
-                             put(Communication.Connect.DEVICE, Build.MODEL);
+                             put(Communication.Connect.DEVICE, Build.MODEL + Build.SERIAL);
                              put(SampleApplication.SENSOR, data);
                          }}
                  );
