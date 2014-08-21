@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class MyActivity extends Activity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
+    private final static int MIN_VALUES_COUNT_PER_SECOND = 5;
+    private final static int MAX_VALUES_COUNT_PER_SECOND = 30;
 
     private Button start, stop, server, client;
     private RadioButton accel, lAccel, fAccel;
@@ -31,9 +33,12 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private boolean bound;
     private Intent intentService;
     private BroadcastReceiver mReceiver;
-    private TextView textView;
+    private TextView textView, tvFilterValue;
     private LinearLayout llChart, frame;
     private boolean pause = false;
+
+    private int filterValuePerSecond = 15; //in seconds
+    private long lastUpdatedTime = System.currentTimeMillis(), updateInterval = 200;
 
     private CheckBox cbX, cbY, cbZ, cbSqrt;
 
@@ -83,13 +88,19 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             }
         };
 
+        findViewById(R.id.clear).setOnClickListener(this);
+        findViewById(R.id.pause).setOnClickListener(this);
+        findViewById(R.id.plus).setOnClickListener(this);
+        findViewById(R.id.minus).setOnClickListener(this);
 
-        try {
-            findViewById(R.id.clear).setOnClickListener(this);
-            findViewById(R.id.pause).setOnClickListener(this);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        tvFilterValue = (TextView) findViewById(R.id.filter_value);
+
+        updateFilterValue();
+    }
+
+    private void updateFilterValue(){
+        updateInterval = 1000 / filterValuePerSecond;
+        tvFilterValue.setText(String.valueOf(filterValuePerSecond));
     }
 
 
@@ -216,6 +227,19 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                 case R.id.type_la:
                     SampleApplication.getInstance().setSendetType(WriteService.TYPE_L);
                     break;
+
+                case R.id.minus:
+                    if (filterValuePerSecond > MIN_VALUES_COUNT_PER_SECOND){
+                        filterValuePerSecond--;
+                        updateFilterValue();
+                    }
+                    break;
+                case R.id.plus:
+                    if (filterValuePerSecond <MAX_VALUES_COUNT_PER_SECOND){
+                        filterValuePerSecond++;
+                        updateFilterValue();
+                    }
+                    break;
             }
         }
     }
@@ -230,6 +254,13 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         mReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
+
+                if (lastUpdatedTime + updateInterval > System.currentTimeMillis()){
+                    return;
+                } else {
+                    lastUpdatedTime = System.currentTimeMillis();
+                }
+
 
                 if (intent.hasExtra(SampleApplication.SENSOR)) {
                     /*String s = textView.getText().toString();
