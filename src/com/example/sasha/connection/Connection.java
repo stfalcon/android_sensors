@@ -15,6 +15,8 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -28,8 +30,8 @@ public class Connection {
   private static final String DEBUG_TAG = Connection.class.getName();
 
   private Server mServer;
-  private Client mClient;
-  private Socket mSocket;
+  private HashMap<InetAddress, Client> mClients = new HashMap<InetAddress, Client>();
+  private ArrayList<Socket> mSockets;
   private Handler mHandler;
   private int mPort = -1;
   private ConnectionListener mConnectionListener;
@@ -57,7 +59,9 @@ public class Connection {
    * @param port    server port
    */
   public void connectToServer(InetAddress address, int port) {
-    mClient = new Client(address, port);
+
+      Client client = new Client(address, port);
+      mClients.put(address, client);
   }
 
   /**
@@ -67,8 +71,9 @@ public class Connection {
     if (mServer != null) {
       mServer.closeConnection();
     }
-    if (mClient != null) {
-      mClient.closeConnection();
+    if (mClients != null) {
+        for (InetAddress address : mClients.keySet())
+      mClients.get(address).closeConnection();
     }
   }
 
@@ -99,8 +104,9 @@ public class Connection {
    * @param msg message string
    */
   public void sendMessage(String msg) {
-    if (mClient != null) {
-      mClient.sendMessage(msg);
+    if (mClients != null) {
+        for (InetAddress address : mClients.keySet())
+            mClients.get(address).sendMessage(msg);
     }
   }
 
@@ -108,20 +114,20 @@ public class Connection {
     if (socket == null) {
       Log.d(DEBUG_TAG, "Setting a null socket.");
     }
-    if (mSocket != null) {
-      if (mSocket.isConnected()) {
+    if (mSockets != null) {
+      /*if (mSockets.isConnected()) {
         try {
-          mSocket.close();
+          mSockets.close();
         } catch (IOException e) {
           Log.d(DEBUG_TAG, "IOException while closing socket: " + e);
         }
-      }
+      }*/
     }
-    mSocket = socket;
+    mSockets.add(socket);
   }
 
   private Socket getSocket() {
-    return mSocket;
+    return mSockets.get(mSockets.size() - 1);
   }
 
   private synchronized void updateMessages(String msg, boolean local) {
@@ -149,7 +155,7 @@ public class Connection {
 
             while (!Thread.currentThread().isInterrupted()) {
               setSocket(mServerSocket.accept());
-              connectToServer(mSocket.getInetAddress(), mSocket.getPort());
+              connectToServer(mSockets.get(mSockets.size() - 1).getInetAddress(), mSockets.get(mSockets.size() - 1).getPort());
             }
           } catch (IOException e) {
             Log.d(DEBUG_TAG, "Server IOException: " + e);
@@ -287,7 +293,7 @@ public class Connection {
         BufferedReader input;
         try {
           input = new BufferedReader(new InputStreamReader(
-              mSocket.getInputStream()));
+              mSockets.get(mSockets.size() - 1).getInputStream()));
           while (!Thread.currentThread().isInterrupted()) {
             String messageStr = null;
             messageStr = input.readLine();

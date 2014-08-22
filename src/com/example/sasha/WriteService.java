@@ -62,7 +62,7 @@ public class WriteService extends Service implements SensorEventListener {
                 new ConnectionWrapper.OnCreatedListener() {
                     @Override
                     public void onCreated() {
-                        createdConnectionWrapper = true;
+                        //createdConnectionWrapper = true;
                     }
                 }
         );
@@ -151,14 +151,15 @@ public class WriteService extends Service implements SensorEventListener {
     public void writeNewData(long time, final String data, int type) {
 
         if(createdConnectionWrapper){
-
-            getConnectionWrapper().send(
-                    new HashMap<String, String>() {{
-                        put(Communication.MESSAGE_TYPE, Communication.Connect.DATA);
-                        put(Communication.Connect.DEVICE, Build.MODEL);
-                        put(SampleApplication.SENSOR, data);
-                    }}
-            );
+             if (type == TYPE_L) {
+                 getConnectionWrapper().send(
+                         new HashMap<String, String>() {{
+                             put(Communication.MESSAGE_TYPE, Communication.Connect.DATA);
+                             put(Communication.Connect.DEVICE, Build.MODEL);
+                             put(SampleApplication.SENSOR, data);
+                         }}
+                 );
+             }
         } else {
 
         if (previousBestLocation != null) {

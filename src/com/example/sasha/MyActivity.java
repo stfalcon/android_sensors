@@ -3,14 +3,26 @@ package com.example.sasha;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.*;
+import android.content.pm.ActivityInfo;
+import android.content.res.Configuration;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
+import android.view.Display;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
+import org.achartengine.ChartFactory;
+import org.achartengine.GraphicalView;
+import org.achartengine.chart.PointStyle;
+import org.achartengine.model.XYMultipleSeriesDataset;
+import org.achartengine.model.XYValueSeries;
+import org.achartengine.renderer.XYMultipleSeriesRenderer;
 
 import java.util.PriorityQueue;
 
@@ -24,6 +36,10 @@ public class MyActivity extends Activity implements View.OnClickListener {
     private BroadcastReceiver mReceiver;
     private ProgressDialog dialog;
     private TextView textView;
+    private LinearLayout llChart, frame;
+    private GraphicalView graphicalView;
+    private XYMultipleSeriesDataset dataSet;
+    private XYValueSeries xSeries, ySeries, zSeries;
 
     /**
      * Called when the activity is first created.
@@ -31,12 +47,14 @@ public class MyActivity extends Activity implements View.OnClickListener {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.main);
+        setContentBasedOnLayout();
         start = (Button) findViewById(R.id.start);
         stop = (Button) findViewById(R.id.stop);
         server = (Button) findViewById(R.id.server);
         client = (Button) findViewById(R.id.client);
         textView = (TextView) findViewById(R.id.text);
+        llChart = (LinearLayout) findViewById(R.id.chart);
+        frame = (LinearLayout) findViewById(R.id.frame);
         start.setOnClickListener(this);
         stop.setOnClickListener(this);
         server.setOnClickListener(this);
@@ -87,7 +105,39 @@ public class MyActivity extends Activity implements View.OnClickListener {
     protected void onResume() {
         super.onResume();
 
+        if (graphicalView == null) {
+            LinearLayout layout = (LinearLayout) findViewById(R.id.chart);
+            graphicalView = ChartFactory.getLineChartView(this, getDemoDataSet(),
+                    getDemoRenderer());
+            layout.addView(graphicalView, new LinearLayout.LayoutParams
+                    (LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
+
+            graphicalView.setKeepScreenOn(true);
+
+        } else {
+            graphicalView.repaint();
+        }
     }
+
+
+    private void setContentBasedOnLayout() {
+        WindowManager winMan = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
+
+        if (winMan != null)
+        {
+            int orientation = winMan.getDefaultDisplay().getOrientation();
+
+            if (orientation == 0) {
+                // Portrait
+                setContentView(R.layout.main);
+            }
+            else if (orientation == 1) {
+                // Landscape
+                setContentView(R.layout.main_land);
+            }
+        }
+    }
+
 
     @Override
     public void onClick(View view) {
@@ -132,9 +182,22 @@ public class MyActivity extends Activity implements View.OnClickListener {
             public void onReceive(Context context, Intent intent) {
 
                 if (intent.hasExtra(SampleApplication.SENSOR)) {
-                    String s = textView.getText().toString();
+                    /*String s = textView.getText().toString();
                     s = s + intent.getStringExtra(SampleApplication.SENSOR);
-                    textView.setText(s);
+                    textView.setText(s);*/
+                    String data = intent.getStringExtra(SampleApplication.SENSOR);
+                    String [] arr = data.split(" ", 4);
+
+                    float time = Long.valueOf(arr[0]);
+                    float x = Float.valueOf(arr[1]);
+                    float y = Float.valueOf(arr[2]);
+                    float z = Float.valueOf(arr[3]);
+
+                    xSeries.add(time / 1000, x);
+                    ySeries.add(time / 1000, y);
+                    zSeries.add(time / 1000, z);
+
+                    graphicalView.repaint();
                     return;
                 }
 
@@ -161,5 +224,51 @@ public class MyActivity extends Activity implements View.OnClickListener {
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, intentFilter);
     }
 
+
+
+
+    private XYMultipleSeriesRenderer getDemoRenderer() {
+        XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
+        renderer.setAxisTitleTextSize(16);
+        renderer.setChartTitleTextSize(20);
+        renderer.setLabelsTextSize(15);
+        renderer.setLegendTextSize(15);
+        renderer.setPointSize(5f);
+        renderer.setMargins(new int[] {20, 30, 15, 0});
+        org.achartengine.renderer.XYSeriesRenderer r = new org.achartengine.renderer.XYSeriesRenderer();
+        r.setColor(Color.BLUE);
+        r.setPointStyle(PointStyle.SQUARE);
+        renderer.addSeriesRenderer(r);
+
+        r = new org.achartengine.renderer.XYSeriesRenderer();
+        r.setPointStyle(PointStyle.CIRCLE);
+        r.setColor(Color.GREEN);
+        r.setFillPoints(true);
+        renderer.addSeriesRenderer(r);
+
+        r = new org.achartengine.renderer.XYSeriesRenderer();
+        r.setPointStyle(PointStyle.DIAMOND);
+        r.setColor(Color.YELLOW);
+        renderer.addSeriesRenderer(r);
+
+        renderer.setAxesColor(Color.DKGRAY);
+        renderer.setLabelsColor(Color.LTGRAY);
+        return renderer;
+    }
+
+
+    private XYMultipleSeriesDataset getDemoDataSet(){
+        dataSet = new XYMultipleSeriesDataset();
+
+        xSeries = new XYValueSeries("X");
+        ySeries = new XYValueSeries("Y");
+        zSeries = new XYValueSeries("Z");
+
+        dataSet.addSeries(xSeries);
+        dataSet.addSeries(ySeries);
+        dataSet.addSeries(zSeries);
+
+        return dataSet;
+    }
 
 }
