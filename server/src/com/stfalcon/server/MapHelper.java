@@ -1,6 +1,5 @@
 package com.stfalcon.server;
 
-import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -57,7 +56,6 @@ public class MapHelper {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                repaintMarkers(i);
                 showValues();
             }
 
@@ -68,7 +66,7 @@ public class MapHelper {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-
+                repaintMarkers(seekBar.getProgress());
             }
         });
 
