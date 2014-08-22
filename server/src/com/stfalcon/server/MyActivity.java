@@ -49,7 +49,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private int filterValuePerSecond = 15; //in seconds
     private long lastUpdatedTime = System.currentTimeMillis(), updateInterval = 200;
 
-    private CheckBox cbX, cbY, cbZ, cbSqrt;
+    private RadioButton rbX, rbY, rbZ, rbSqrt;
+    private RadioGroup radioGroup;
 
     ArrayList<DeviceGraphInformation> devices = new ArrayList<DeviceGraphInformation>();
     private GraphicalView graphicalView;
@@ -172,15 +173,17 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                 // Landscape
                 setContentView(R.layout.main_land);
 
-                cbX = (CheckBox) findViewById(R.id.rb_x);
-                cbY = (CheckBox) findViewById(R.id.rb_y);
-                cbZ = (CheckBox) findViewById(R.id.rb_z);
-                cbSqrt = (CheckBox) findViewById(R.id.rb_sqrt);
+                radioGroup = (RadioGroup) findViewById(R.id.radio_group);
 
-                cbX.setOnCheckedChangeListener(this);
-                cbY.setOnCheckedChangeListener(this);
-                cbZ.setOnCheckedChangeListener(this);
-                cbSqrt.setOnCheckedChangeListener(this);
+                rbX = (RadioButton) findViewById(R.id.rb_x);
+                rbY = (RadioButton) findViewById(R.id.rb_y);
+                rbZ = (RadioButton) findViewById(R.id.rb_z);
+                rbSqrt = (RadioButton) findViewById(R.id.rb_sqrt);
+
+                rbX.setOnCheckedChangeListener(this);
+                rbY.setOnCheckedChangeListener(this);
+                rbZ.setOnCheckedChangeListener(this);
+                rbSqrt.setOnCheckedChangeListener(this);
             }
         }
     }
@@ -332,7 +335,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     long sendingTime;
 
                     String data = datas[datas.length - 1];
-                    String[] arr = data.split(" ", 4);
+                    Log.i("logerr", data);
+                    String[] arr = data.split(" ", 6);
                     long lastTime = Long.valueOf(arr[0]);
                     sendingTime = currentTime - lastTime;
 
@@ -342,13 +346,33 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         float x = Float.valueOf(arr[1]);
                         float y = Float.valueOf(arr[2]);
                         float z = Float.valueOf(arr[3]);
+                        float sqr = (float) Math.sqrt(x * x + y * y + z * z);
 
                         try {
                             double lat, lon;
                             lat = Double.valueOf(arr[4]);
                             lon = Double.valueOf(arr[5]);
 
-                            //TODO: diaplay on Map
+                            float pit;
+
+                            switch (radioGroup.getCheckedRadioButtonId()){
+                                case R.id.rb_x:
+                                    pit = x;
+                                    break;
+                                case R.id.rb_y:
+                                    pit = y;
+                                    break;
+                                case R.id.rb_z:
+                                    pit = z;
+                                    break;
+                                case R.id.rb_sqrt:
+                                default:
+                                    pit = sqr;
+                                    break;
+
+                            }
+
+                            mapHelper.addPoint(lat, lon, pit);
                         } catch (NumberFormatException e) {
                             e.printStackTrace();
                         }
@@ -366,7 +390,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         information.xSeries.add(graphTime, x);
                         information.ySeries.add(graphTime, y);
                         information.zSeries.add(graphTime, z);
-                        information.sqrSeries.add(graphTime, Math.sqrt(x * x + y * y + z * z));
+                        information.sqrSeries.add(graphTime, sqr);
 
                     }
 
@@ -461,7 +485,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         XYValueSeries sqrSeries = new XYValueSeries(information.device + "-sqr");
 
         information.sqrSeries = sqrSeries;
-        if (cbSqrt.isChecked()) {
+        if (rbSqrt.isChecked()) {
             renderer.addSeriesRenderer(information.sqrSeriesRenderer);
             dataSet.addSeries(devices.size(), sqrSeries);
         }
@@ -479,7 +503,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         XYValueSeries zSeries = new XYValueSeries(information.device + "-Z");
         information.zSeries = zSeries;
 
-        if (cbZ.isChecked()) {
+        if (rbZ.isChecked()) {
             renderer.addSeriesRenderer(information.zSeriesRenderer);
             dataSet.addSeries(devices.size(), zSeries);
         }
@@ -496,7 +520,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
         XYValueSeries ySeries = new XYValueSeries(information.device + "-Y");
         information.ySeries = ySeries;
-        if (cbY.isChecked()) {
+        if (rbY.isChecked()) {
             renderer.addSeriesRenderer(information.ySeriesRenderer);
             dataSet.addSeries(devices.size(), ySeries);
         }
@@ -514,7 +538,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         XYValueSeries xSeries = new XYValueSeries(information.device + "-X");
         information.xSeries = xSeries;
 
-        if (cbX.isChecked()) {
+        if (rbX.isChecked()) {
             renderer.addSeriesRenderer(information.xSeriesRenderer);
             dataSet.addSeries(devices.size(), xSeries);
         }

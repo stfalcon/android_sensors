@@ -172,9 +172,9 @@ public class WriteService extends Service implements SensorEventListener {
 
         if (createdConnectionWrapper) {
             if (type == activSensorType) {
-                if (previousBestLocation != null) {
+                if (previousBestLocation != null && data != null) {
                     String loc = " " + previousBestLocation.getLatitude() + " " + previousBestLocation.getLongitude();
-                    data += loc;
+                    data = data + loc;
                 }
 
                 dataToSend.add(data);
