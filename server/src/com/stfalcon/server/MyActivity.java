@@ -2,9 +2,11 @@ package com.stfalcon.server;
 
 import android.app.Activity;
 import android.content.*;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.IBinder;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -19,12 +21,15 @@ import org.achartengine.model.XYValueSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 
+import java.io.*;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Random;
 
 public class MyActivity extends Activity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
     private final static int MIN_VALUES_COUNT_PER_SECOND = 5;
     private final static int MAX_VALUES_COUNT_PER_SECOND = 30;
+    private final static int MILLISECONDS_BEFORE_REFRESH_GRAPHS = 30;
 
     private Button  server;
     private ServiceConnection sConn;
@@ -78,6 +83,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         findViewById(R.id.pause).setOnClickListener(this);
         findViewById(R.id.plus).setOnClickListener(this);
         findViewById(R.id.minus).setOnClickListener(this);
+        findViewById(R.id.screen_shot).setOnClickListener(this);
 
         tvFilterValue = (TextView) findViewById(R.id.filter_value);
 
@@ -202,7 +208,36 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         updateFilterValue();
                     }
                     break;
+
+                case R.id.screen_shot:
+                    makeScreenShot();
+                    break;
             }
+        }
+    }
+
+    private void makeScreenShot() {
+        Bitmap bitmap = graphicalView.toBitmap();
+
+        try {
+            File directory = new File("/sdcard/AccelData/ScreenShots/");
+            directory.mkdirs();
+
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String time = simpleDateFormat.format(System.currentTimeMillis());
+
+            File jpegPictureFile = new File("/sdcard/AccelData/ScreenShots/" + time + "_graph.jpeg");
+            jpegPictureFile.createNewFile();
+            FileOutputStream pictureOutputStream = new FileOutputStream(jpegPictureFile);
+
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, pictureOutputStream);
+
+            MediaStore.Images.Media.insertImage(getContentResolver(), jpegPictureFile.getPath(), null
+                    , "Graph Screen Shot");
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -256,16 +291,28 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         devices.add(information);
                     }
 
+                    if (information.xSeries.getMaxX() + 1000 < time)  {
+                        createAndAddXSeriesAndRenderer(information);
+                    }
+                    if (information.ySeries.getMaxX() + 1000 < time)
+                        createAndAddYSeriesAndRenderer(information);
+                    if (information.zSeries.getMaxX() + 1000 < time)
+                        createAndAddZSeriesAndRenderer(information);
+                    if (information.sqrSeries.getMaxX() + 1000 < time)
+                        information.xSeries.clearAnnotations();
+                        createAndAddSqrSeriesAndRenderer(information);
+
+
                     information.xSeries.add(time, x);
                     information.ySeries.add(time, y);
                     information.zSeries.add(time, z);
                     information.sqrSeries.add(time, Math.sqrt(x * x + y * y + z * z));
 
-                    renderer.setXAxisMin(System.currentTimeMillis() - 10000);
-                    renderer.setXAxisMax(System.currentTimeMillis() + 500);
-
-                    if (!pause)
+                    if (!pause){
+                        renderer.setXAxisMin(System.currentTimeMillis() - 10000);
+                        renderer.setXAxisMax(System.currentTimeMillis() + 500);
                         graphicalView.repaint();
+                    }
                     return;
                 }
 
@@ -330,66 +377,84 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
     private void createSeriesAndRendersForNewDevice(DeviceGraphInformation information){
         try {
-            XYSeriesRenderer r = new XYSeriesRenderer();
-            r.setColor(Color.BLUE + 100 * devices.size());
-            r.setPointStyle(PointStyle.SQUARE);
-            r.setFillPoints(true);
-
-            information.xSeriesRenderer = r;
-
-
-            r = new XYSeriesRenderer();
-            r.setPointStyle(PointStyle.TRIANGLE);
-            r.setFillPoints(true);
-            r.setColor(getRandomColor());
-
-            information.ySeriesRenderer = r;
-
-            r = new XYSeriesRenderer();
-            r.setColor(getRandomColor());
-            r.setPointStyle(PointStyle.DIAMOND);
-            r.setFillPoints(true);
-
-            information.zSeriesRenderer = r;
-
-            r = new XYSeriesRenderer();
-            r.setColor(getRandomColor());
-            r.setPointStyle(PointStyle.CIRCLE);
-            r.setFillPoints(true);
-
-            information.sqrSeriesRenderer = r;
-
-
-            String name = information.device;
-
-            XYValueSeries xSeries = new XYValueSeries(name + "-X");
-            XYValueSeries ySeries = new XYValueSeries(name + "-Y");
-            XYValueSeries zSeries = new XYValueSeries(name + "-Z");
-            XYValueSeries sqrSeries = new XYValueSeries(name + "-sqr");
-
-            information.xSeries = xSeries;
-            information.ySeries = ySeries;
-            information.zSeries = zSeries;
-            information.sqrSeries = sqrSeries;
-
-            if (cbX.isChecked()){
-                renderer.addSeriesRenderer(information.xSeriesRenderer);
-                dataSet.addSeries(devices.size(), xSeries);
-            }
-            if (cbY.isChecked()){
-                renderer.addSeriesRenderer(information.ySeriesRenderer);
-                dataSet.addSeries(devices.size(), ySeries);
-            }
-            if (cbZ.isChecked()){
-                renderer.addSeriesRenderer(information.zSeriesRenderer);
-                dataSet.addSeries(devices.size(), zSeries);
-            }
-            if (cbSqrt.isChecked()){
-                renderer.addSeriesRenderer(information.sqrSeriesRenderer);
-                dataSet.addSeries(devices.size(), sqrSeries);
-            }
+            createAndAddXSeriesAndRenderer(information);
+            createAndAddYSeriesAndRenderer(information);
+            createAndAddZSeriesAndRenderer(information);
+            createAndAddSqrSeriesAndRenderer(information);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private void createAndAddSqrSeriesAndRenderer(DeviceGraphInformation information) {
+        XYSeriesRenderer r = new XYSeriesRenderer();
+        r.setColor(getRandomColor());
+        r.setPointStyle(PointStyle.CIRCLE);
+        r.setFillPoints(true);
+        r.setLineWidth(3f);
+
+        information.sqrSeriesRenderer = r;
+
+
+        XYValueSeries sqrSeries = new XYValueSeries(information.device + "-sqr");
+
+        information.sqrSeries = sqrSeries;
+        if (cbSqrt.isChecked()){
+            renderer.addSeriesRenderer(information.sqrSeriesRenderer);
+            dataSet.addSeries(devices.size(), sqrSeries);
+        }
+    }
+
+    private void createAndAddZSeriesAndRenderer(DeviceGraphInformation information) {
+        XYSeriesRenderer r = new XYSeriesRenderer();
+        r.setColor(getRandomColor());
+        r.setPointStyle(PointStyle.DIAMOND);
+        r.setFillPoints(true);
+        r.setLineWidth(3f);
+
+        information.zSeriesRenderer = r;
+
+        XYValueSeries zSeries = new XYValueSeries(information.device + "-Z");
+        information.zSeries = zSeries;
+
+        if (cbZ.isChecked()){
+            renderer.addSeriesRenderer(information.zSeriesRenderer);
+            dataSet.addSeries(devices.size(), zSeries);
+        }
+    }
+
+    private void createAndAddYSeriesAndRenderer(DeviceGraphInformation information) {
+        XYSeriesRenderer r = new XYSeriesRenderer();
+        r.setPointStyle(PointStyle.TRIANGLE);
+        r.setFillPoints(true);
+        r.setColor(getRandomColor());
+        r.setLineWidth(3f);
+
+        information.ySeriesRenderer = r;
+
+        XYValueSeries ySeries = new XYValueSeries(information.device + "-Y");
+        information.ySeries = ySeries;
+        if (cbY.isChecked()){
+            renderer.addSeriesRenderer(information.ySeriesRenderer);
+            dataSet.addSeries(devices.size(), ySeries);
+        }
+    }
+
+    private void createAndAddXSeriesAndRenderer(DeviceGraphInformation information) {
+        XYSeriesRenderer r = new XYSeriesRenderer();
+        r.setColor(getRandomColor());
+        r.setPointStyle(PointStyle.SQUARE);
+        r.setFillPoints(true);
+        r.setLineWidth(3f);
+
+        information.xSeriesRenderer = r;
+
+        XYValueSeries xSeries = new XYValueSeries(information.device + "-X");
+        information.xSeries = xSeries;
+
+        if (cbX.isChecked()){
+            renderer.addSeriesRenderer(information.xSeriesRenderer);
+            dataSet.addSeries(devices.size(), xSeries);
         }
     }
 

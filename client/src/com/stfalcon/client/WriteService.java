@@ -137,7 +137,7 @@ public class WriteService extends Service implements SensorEventListener {
             outputStreamWriterGPS.close();
         } catch (IOException e) {
             e.printStackTrace();
-        } catch (NullPointerException e){
+        } catch (NullPointerException e) {
             e.printStackTrace();
         }
 
@@ -150,41 +150,61 @@ public class WriteService extends Service implements SensorEventListener {
     /**
      *
      */
-    public void writeNewData(long time, final String data, int type) {
+    public void writeNewData(long time, final String data, final int type) {
 
-        if(createdConnectionWrapper){
-             if (type == activSensorType) {
-                 getConnectionWrapper().send(
-                         new HashMap<String, String>() {{
-                             put(Communication.MESSAGE_TYPE, Communication.Connect.DATA);
-                             put(Communication.Connect.DEVICE, Build.MODEL + Build.SERIAL);
-                             put(SampleApplication.SENSOR, data);
-                         }}
-                 );
-             }
+        if (createdConnectionWrapper) {
+            if (type == activSensorType) {
+                getConnectionWrapper().send(
+                        new HashMap<String, String>() {{
+                            put(Communication.MESSAGE_TYPE, Communication.Connect.DATA);
+                            put(Communication.Connect.DEVICE, createDeviceDescription(type));
+                            put(SampleApplication.SENSOR, data);
+                        }}
+                );
+            }
         } else {
 
-        if (previousBestLocation != null) {
-            String loc = " lat" + previousBestLocation.getLatitude() + " " + "lon" + previousBestLocation.getLongitude();
-            try {
-                String location = String.valueOf(time) + loc + "\n";
-                outputStreamWriterGPS.write(location);
-                switch (type) {
-                    case TYPE_A:
-                        outputStreamWriterA.write(data);
-                        break;
-                    case TYPE_F:
-                        outputStreamWriterS.write(data);
-                        break;
-                    case TYPE_L:
-                        outputStreamWriterL.write(data);
-                        break;
+            if (previousBestLocation != null) {
+                String loc = " lat" + previousBestLocation.getLatitude() + " " + "lon" + previousBestLocation.getLongitude();
+                try {
+                    String location = String.valueOf(time) + loc + "\n";
+                    outputStreamWriterGPS.write(location);
+                    switch (type) {
+                        case TYPE_A:
+                            outputStreamWriterA.write(data);
+                            break;
+                        case TYPE_F:
+                            outputStreamWriterS.write(data);
+                            break;
+                        case TYPE_L:
+                            outputStreamWriterL.write(data);
+                            break;
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
+    }
+
+    private String createDeviceDescription(int type) {
+        String stringType;
+        switch (type) {
+            case TYPE_A:
+                stringType = "Accel";
+                break;
+            case TYPE_F:
+                stringType = "Filter-Accel";
+                break;
+            case TYPE_L:
+            default:
+                stringType = "Linear-Accel";
+                break;
         }
+
+        String serial = Build.SERIAL;
+        serial = serial.substring(serial.length() - 3);
+        return Build.MODEL + "-" + serial + "-" + stringType;
     }
 
 
@@ -204,7 +224,7 @@ public class WriteService extends Service implements SensorEventListener {
                         .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
                         .setContentIntent(contentIntent);
 
-        if (createdConnectionWrapper){
+        if (createdConnectionWrapper) {
             mBuilder.setContentText(getString(R.string.send));
         } else {
             mBuilder.setContentText(getString(R.string.write));
@@ -374,31 +394,29 @@ public class WriteService extends Service implements SensorEventListener {
     }
 
 
-
-
     // WIFI CONNECTION
 
     /**
      *
      */
-    public void startServer(){
-            WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-            int intaddr = wifi.getConnectionInfo().getIpAddress();
+    public void startServer() {
+        WifiManager wifi = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        int intaddr = wifi.getConnectionInfo().getIpAddress();
 
-            if (wifi.getWifiState() == WifiManager.WIFI_STATE_DISABLED || intaddr == 0) {
-                Intent intentTracking = new Intent(SampleApplication.CONNECTED);
-                intentTracking.putExtra(SampleApplication.WIFI, true);
-                LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
-            } else {
-                getConnectionWrapper().stopNetworkDiscovery();
-                getConnectionWrapper().startServer();
-                getConnectionWrapper().setHandler(mServerHandler);
+        if (wifi.getWifiState() == WifiManager.WIFI_STATE_DISABLED || intaddr == 0) {
+            Intent intentTracking = new Intent(SampleApplication.CONNECTED);
+            intentTracking.putExtra(SampleApplication.WIFI, true);
+            LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
+        } else {
+            getConnectionWrapper().stopNetworkDiscovery();
+            getConnectionWrapper().startServer();
+            getConnectionWrapper().setHandler(mServerHandler);
 
-                Intent intentTracking = new Intent(SampleApplication.CONNECTED);
-                intentTracking.putExtra(SampleApplication.STARTED, true);
-                LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
-            }
+            Intent intentTracking = new Intent(SampleApplication.CONNECTED);
+            intentTracking.putExtra(SampleApplication.STARTED, true);
+            LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
         }
+    }
 
     /**
      *
