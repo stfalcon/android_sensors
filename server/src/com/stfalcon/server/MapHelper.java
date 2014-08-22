@@ -52,14 +52,13 @@ public class MapHelper {
             }
         });
 
+        showValues();
         seekBar = (SeekBar) activity.findViewById(R.id.seek_bar);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                 repaintMarkers(i);
-                ((TextView)activity.findViewById(R.id.green)).setText("< " + green_pin);
-                ((TextView)activity.findViewById(R.id.yellow)).setText("> " + green_pin + " <" + yellow_pin);
-                ((TextView)activity.findViewById(R.id.red)).setText("> " + yellow_pin);
+                showValues();
             }
 
             @Override
@@ -115,5 +114,12 @@ public class MapHelper {
                     Float.valueOf(markers.get(i).getTitle()));
         }
 
+    }
+
+
+    private void showValues(){
+        ((TextView)activity.findViewById(R.id.green)).setText("< " + green_pin);
+        ((TextView)activity.findViewById(R.id.yellow)).setText("> " + green_pin + " <" + yellow_pin);
+        ((TextView)activity.findViewById(R.id.red)).setText("> " + yellow_pin);
     }
 }

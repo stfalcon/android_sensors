@@ -198,9 +198,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     if(mapFragment.getVisibility() == View.VISIBLE){
                         mapFragment.setVisibility(View.GONE);
                         findViewById(R.id.seek_bar).setVisibility(View.GONE);
-                        findViewById(R.id.green).setVisibility(View.GONE);
-                        findViewById(R.id.yellow).setVisibility(View.GONE);
-                        findViewById(R.id.red).setVisibility(View.GONE);
+
                         showMap.setText("Show Map");
                     } else {
                         mapFragment.setVisibility(View.VISIBLE);
