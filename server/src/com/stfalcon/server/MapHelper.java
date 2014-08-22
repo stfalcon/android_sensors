@@ -3,6 +3,8 @@ package com.stfalcon.server;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.*;
@@ -51,12 +53,12 @@ public class MapHelper {
             }
         });
 
-        showValues();
+        showValues((int)green_pin);
         seekBar = (SeekBar) activity.findViewById(R.id.seek_bar);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
-                showValues();
+                showValues(i);
             }
 
             @Override
@@ -66,7 +68,7 @@ public class MapHelper {
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
-                repaintMarkers(seekBar.getProgress());
+                repaintMarkers();
             }
         });
 
@@ -99,9 +101,7 @@ public class MapHelper {
 
 
 
-    private void repaintMarkers(int green_pin){
-        this.green_pin = green_pin;
-        yellow_pin = green_pin * 1.5;
+    private void repaintMarkers(){
 
         googleMap.clear();
 
@@ -115,7 +115,10 @@ public class MapHelper {
     }
 
 
-    private void showValues(){
+    private void showValues(int green_pin){
+        this.green_pin = green_pin;
+        yellow_pin = green_pin * 1.5;
+
         ((TextView)activity.findViewById(R.id.green)).setText("< " + green_pin);
         ((TextView)activity.findViewById(R.id.yellow)).setText("> " + green_pin + " <" + yellow_pin);
         ((TextView)activity.findViewById(R.id.red)).setText("> " + yellow_pin);
