@@ -26,13 +26,14 @@ import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Random;
+import java.util.StringTokenizer;
 
 public class MyActivity extends Activity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
     private final static int MIN_VALUES_COUNT_PER_SECOND = 5;
     private final static int MAX_VALUES_COUNT_PER_SECOND = 30;
     private final static int MILLISECONDS_BEFORE_REFRESH_GRAPHS = 30;
 
-    private Button  server;
+    private Button server;
     private ServiceConnection sConn;
     private WriteService writeServise;
     private boolean bound = false;
@@ -91,7 +92,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         updateFilterValue();
     }
 
-    private void updateFilterValue(){
+    private void updateFilterValue() {
         updateInterval = 1000 / filterValuePerSecond;
         tvFilterValue.setText(String.valueOf(filterValuePerSecond));
     }
@@ -137,8 +138,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         }
     }
 
-    private void clearGraph(){
-        if (graphicalView.isChartDrawn()){
+    private void clearGraph() {
+        if (graphicalView.isChartDrawn()) {
             renderer.removeAllRenderers();
             dataSet.clear();
             devices.clear();
@@ -184,7 +185,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     break;
 
                 case R.id.pause:
-                    if (pause){
+                    if (pause) {
                         pause = false;
                     } else {
                         pause = true;
@@ -198,13 +199,13 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
 
                 case R.id.minus:
-                    if (filterValuePerSecond > MIN_VALUES_COUNT_PER_SECOND){
+                    if (filterValuePerSecond > MIN_VALUES_COUNT_PER_SECOND) {
                         filterValuePerSecond--;
                         updateFilterValue();
                     }
                     break;
                 case R.id.plus:
-                    if (filterValuePerSecond <MAX_VALUES_COUNT_PER_SECOND){
+                    if (filterValuePerSecond < MAX_VALUES_COUNT_PER_SECOND) {
                         filterValuePerSecond++;
                         updateFilterValue();
                     }
@@ -259,7 +260,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                 }
 
 
-                if (lastUpdatedTime + updateInterval > System.currentTimeMillis()){
+                if (lastUpdatedTime + updateInterval > System.currentTimeMillis()) {
                     return;
                 } else {
                     lastUpdatedTime = System.currentTimeMillis();
@@ -273,15 +274,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                     String device = intent.getStringExtra(SampleApplication.DEVICE);
 
-                    String data = intent.getStringExtra(SampleApplication.SENSOR);
-                    String[] arr = data.split(" ", 4);
-
-                    //long time = Long.valueOf(arr[0]);
-                    long time = System.currentTimeMillis();
-                    float x = Float.valueOf(arr[1]);
-                    float y = Float.valueOf(arr[2]);
-                    float z = Float.valueOf(arr[3]);
-
 
                     DeviceGraphInformation information = findDeviceOnGraph(device);
                     if (information == null) {
@@ -292,26 +284,56 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         devices.add(information);
                     }
 
-                    if (information.xSeries.getMaxX() + 1000 < time)
-                        information.xSeries.add(time - 500, MathHelper.NULL_VALUE);
-                    if (information.ySeries.getMaxX() + 1000 < time)
-                        information.ySeries.add(time - 500, MathHelper.NULL_VALUE);
-                    if (information.zSeries.getMaxX() + 1000 < time)
-                        information.zSeries.add(time - 500, MathHelper.NULL_VALUE);
-                    if (information.sqrSeries.getMaxX() + 1000 < time)
-                        information.sqrSeries.add(time - 500, MathHelper.NULL_VALUE);
+                    long currentTime = System.currentTimeMillis();
 
 
-                    if (!pause){
-                        information.xSeries.add(time, x);
-                        information.ySeries.add(time, y);
-                        information.zSeries.add(time, z);
-                        information.sqrSeries.add(time, Math.sqrt(x * x + y * y + z * z));
-
-                        renderer.setXAxisMin(System.currentTimeMillis() - 10000);
-                        renderer.setXAxisMax(System.currentTimeMillis() + 500);
-                        graphicalView.repaint();
+                    if (pause){
+                        information.xSeries.add(currentTime - 500, MathHelper.NULL_VALUE);
+                        information.ySeries.add(currentTime - 500, MathHelper.NULL_VALUE);
+                        information.zSeries.add(currentTime - 500, MathHelper.NULL_VALUE);
+                        information.sqrSeries.add(currentTime - 500, MathHelper.NULL_VALUE);
+                        return;
                     }
+
+                    String[] datas = intent.getStringExtra(SampleApplication.SENSOR).split("\n");
+
+
+                    long sendingTime;
+
+                    String data = datas[datas.length - 1];
+                    String[] arr = data.split(" ", 4);
+                    long lastTime = Long.valueOf(arr[0]);
+                    sendingTime = currentTime - lastTime;
+
+                    for (String currentData : datas) {
+                        arr = currentData.split(" ", 4);
+                        long readDataTime = Long.valueOf(arr[0]);
+                        float x = Float.valueOf(arr[1]);
+                        float y = Float.valueOf(arr[2]);
+                        float z = Float.valueOf(arr[3]);
+
+                        long graphTime = sendingTime + readDataTime;
+
+                        if (information.xSeries.getMaxX() + 1000 < graphTime) {
+
+                            information.xSeries.add(currentTime - 500, MathHelper.NULL_VALUE);
+                            information.ySeries.add(currentTime - 500, MathHelper.NULL_VALUE);
+                            information.zSeries.add(currentTime - 500, MathHelper.NULL_VALUE);
+                            information.sqrSeries.add(currentTime - 500, MathHelper.NULL_VALUE);
+                        }
+
+                        information.xSeries.add(graphTime, x);
+                        information.ySeries.add(graphTime, y);
+                        information.zSeries.add(graphTime, z);
+                        information.sqrSeries.add(graphTime, Math.sqrt(x * x + y * y + z * z));
+
+                    }
+
+
+                    renderer.setXAxisMin(System.currentTimeMillis() - 10000);
+                    renderer.setXAxisMax(System.currentTimeMillis() + 500);
+                    graphicalView.repaint();
+
                     return;
                 }
 
@@ -374,7 +396,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         return dataSet;
     }
 
-    private void createSeriesAndRendersForNewDevice(DeviceGraphInformation information){
+    private void createSeriesAndRendersForNewDevice(DeviceGraphInformation information) {
         try {
             createAndAddXSeriesAndRenderer(information);
             createAndAddYSeriesAndRenderer(information);
@@ -398,7 +420,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         XYValueSeries sqrSeries = new XYValueSeries(information.device + "-sqr");
 
         information.sqrSeries = sqrSeries;
-        if (cbSqrt.isChecked()){
+        if (cbSqrt.isChecked()) {
             renderer.addSeriesRenderer(information.sqrSeriesRenderer);
             dataSet.addSeries(devices.size(), sqrSeries);
         }
@@ -416,7 +438,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         XYValueSeries zSeries = new XYValueSeries(information.device + "-Z");
         information.zSeries = zSeries;
 
-        if (cbZ.isChecked()){
+        if (cbZ.isChecked()) {
             renderer.addSeriesRenderer(information.zSeriesRenderer);
             dataSet.addSeries(devices.size(), zSeries);
         }
@@ -433,7 +455,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
         XYValueSeries ySeries = new XYValueSeries(information.device + "-Y");
         information.ySeries = ySeries;
-        if (cbY.isChecked()){
+        if (cbY.isChecked()) {
             renderer.addSeriesRenderer(information.ySeriesRenderer);
             dataSet.addSeries(devices.size(), ySeries);
         }
@@ -451,13 +473,13 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         XYValueSeries xSeries = new XYValueSeries(information.device + "-X");
         information.xSeries = xSeries;
 
-        if (cbX.isChecked()){
+        if (cbX.isChecked()) {
             renderer.addSeriesRenderer(information.xSeriesRenderer);
             dataSet.addSeries(devices.size(), xSeries);
         }
     }
 
-    public int getRandomColor(){
+    public int getRandomColor() {
         Random rand = new Random();
         // Java 'Color' class takes 3 floats, from 0 to 1.
         int r = rand.nextInt(255);
@@ -492,11 +514,10 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     break;
             }
 
-            if (isChecked){
+            if (isChecked) {
                 renderer.addSeriesRenderer(seriesRenderer);
                 dataSet.addSeries(series);
-            }
-            else {
+            } else {
                 renderer.removeSeriesRenderer(seriesRenderer);
                 dataSet.removeSeries(series);
             }
@@ -507,6 +528,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
     private class DeviceGraphInformation {
         private String device;
+
         private XYValueSeries xSeries;
         private XYValueSeries ySeries;
         private XYValueSeries zSeries;
