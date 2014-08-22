@@ -201,7 +201,7 @@ public class WriteService extends Service implements SensorEventListener {
     }
 
     private String createDeviceDescription(int type) {
-        String stringType;
+        String stringType = "";
         switch (type) {
             case TYPE_A:
                 stringType = "Accel";
@@ -209,8 +209,10 @@ public class WriteService extends Service implements SensorEventListener {
             case TYPE_F:
                 stringType = "Filter-Accel";
                 break;
+            case TYPE_G:
+                stringType = "Gravity";
+                break;
             case TYPE_L:
-            default:
                 stringType = "Linear-Accel";
                 break;
         }
