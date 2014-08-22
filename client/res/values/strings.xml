@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Client</string>
+    <string name="start">Start</string>
+    <string name="stop">Stop</string>
+    <string name="write">Write to file</string>
+    <string name="send">Send to wifi server</string>
+    <string name="sensor_title">Sensors listening:</string>
+    <string name="connection_title">WiFi connection:</string>
+    <string name="i_server">I am server</string>
+    <string name="connect">Connect to server</string>
+    <string name="connected">Connected to server</string>
+</resources>
