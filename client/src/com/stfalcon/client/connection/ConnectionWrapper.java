@@ -80,7 +80,7 @@ public class ConnectionWrapper {
    * performs servers search
    *
    * @param listener listener, that will be called after something found
-   *                 (see {@link com.example.sasha.connection.NetworkDiscovery.OnFoundListener})
+   *                 (see {@link com.stfalcon.client.connection.NetworkDiscovery.OnFoundListener})
    */
   public void findServers(final NetworkDiscovery.OnFoundListener listener) {
     new AsyncTask<Void, Void, Void>() {
@@ -99,7 +99,7 @@ public class ConnectionWrapper {
    * @param address            server address
    * @param port               server port
    * @param connectionListener listener, that will be called after connection
-   *                           (see {@link com.example.sasha.connection.Connection.ConnectionListener})
+   *                           (see {@link com.stfalcon.client.connection.Connection.ConnectionListener})
    */
   public void connectToServer(Inet4Address address,
                               int port,

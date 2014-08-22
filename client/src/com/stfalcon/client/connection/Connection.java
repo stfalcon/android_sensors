@@ -80,7 +80,7 @@ public class Connection {
 
   /**
    * returns local port
-   * used in {@link com.example.sasha.connection.ConnectionWrapper}
+   * used in {@link com.stfalcon.client.connection.ConnectionWrapper}
    *
    * @return port
    */

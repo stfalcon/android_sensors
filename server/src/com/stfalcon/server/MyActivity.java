@@ -22,18 +22,19 @@ import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
 import org.achartengine.util.MathHelper;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.StringTokenizer;
 
 public class MyActivity extends Activity implements View.OnClickListener, CompoundButton.OnCheckedChangeListener {
     private final static int MIN_VALUES_COUNT_PER_SECOND = 5;
     private final static int MAX_VALUES_COUNT_PER_SECOND = 30;
     private final static int MILLISECONDS_BEFORE_REFRESH_GRAPHS = 30;
-
-    private Button server;
+    private Button server, showMap;
     private ServiceConnection sConn;
     private WriteService writeServise;
     private boolean bound = false;
@@ -42,6 +43,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private TextView textView, tvFilterValue;
     private LinearLayout llChart;
     private boolean pause = false;
+    private MapHelper mapHelper;
+    private View mapFragment;
 
     private int filterValuePerSecond = 15; //in seconds
     private long lastUpdatedTime = System.currentTimeMillis(), updateInterval = 200;
@@ -60,10 +63,17 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentBasedOnLayout();
+
+        mapHelper = new MapHelper(this);
+
         server = (Button) findViewById(R.id.server);
+        showMap = (Button) findViewById(R.id.show_map);
         textView = (TextView) findViewById(R.id.text);
         llChart = (LinearLayout) findViewById(R.id.chart);
+        mapFragment = (View) findViewById(R.id.map);
+        mapFragment.setVisibility(View.GONE);
         server.setOnClickListener(this);
+        showMap.setOnClickListener(this);
 
         intentService = new Intent(this, WriteService.class);
 
@@ -124,6 +134,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     protected void onResume() {
         super.onResume();
 
+        mapHelper.initilizeMap();
+
         if (graphicalView == null) {
             LinearLayout layout = (LinearLayout) findViewById(R.id.chart);
             graphicalView = ChartFactory.getLineChartView(this, getDemoDataSet(),
@@ -182,6 +194,25 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                 case R.id.server:
                     //startActivity(new Intent(this, ConnectActivity.class));
                     writeServise.startServer();
+                    break;
+
+                case R.id.show_map:
+                    if (mapFragment.getVisibility() == View.VISIBLE) {
+                        mapFragment.setVisibility(View.GONE);
+                        findViewById(R.id.seek_bar).setVisibility(View.GONE);
+                        findViewById(R.id.green).setVisibility(View.GONE);
+                        findViewById(R.id.yellow).setVisibility(View.GONE);
+                        findViewById(R.id.red).setVisibility(View.GONE);
+
+                        showMap.setText("Show Map");
+                    } else {
+                        mapFragment.setVisibility(View.VISIBLE);
+                        findViewById(R.id.seek_bar).setVisibility(View.VISIBLE);
+                        findViewById(R.id.green).setVisibility(View.VISIBLE);
+                        findViewById(R.id.yellow).setVisibility(View.VISIBLE);
+                        findViewById(R.id.red).setVisibility(View.VISIBLE);
+                        showMap.setText("Hide Map");
+                    }
                     break;
 
                 case R.id.pause:
@@ -287,7 +318,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     long currentTime = System.currentTimeMillis();
 
 
-                    if (pause){
+                    if (pause) {
                         information.xSeries.add(currentTime - 500, MathHelper.NULL_VALUE);
                         information.ySeries.add(currentTime - 500, MathHelper.NULL_VALUE);
                         information.zSeries.add(currentTime - 500, MathHelper.NULL_VALUE);

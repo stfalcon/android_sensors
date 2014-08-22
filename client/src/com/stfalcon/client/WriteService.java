@@ -478,21 +478,25 @@ public class WriteService extends Service implements SensorEventListener {
      *
      */
     public void connect() {
-        if (createdConnectionWrapper) {
-            getConnectionWrapper().findServers(new NetworkDiscovery.OnFoundListener() {
-                @Override
-                public void onFound(javax.jmdns.ServiceInfo info) {
-                    if (info != null && info.getInet4Addresses().length > 0) {
-                        getConnectionWrapper().stopNetworkDiscovery();
-                        getConnectionWrapper().connectToServer(
-                                info.getInet4Addresses()[0],
-                                info.getPort(),
-                                mConnectionListener
-                        );
-                        getConnectionWrapper().setHandler(mClientHandler);
+        try {
+            if (createdConnectionWrapper) {
+                getConnectionWrapper().findServers(new NetworkDiscovery.OnFoundListener() {
+                    @Override
+                    public void onFound(javax.jmdns.ServiceInfo info) {
+                        if (info != null && info.getInet4Addresses().length > 0) {
+                            getConnectionWrapper().stopNetworkDiscovery();
+                            getConnectionWrapper().connectToServer(
+                                    info.getInet4Addresses()[0],
+                                    info.getPort(),
+                                    mConnectionListener
+                            );
+                            getConnectionWrapper().setHandler(mClientHandler);
+                        }
                     }
-                }
-            });
+                });
+            }
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 
