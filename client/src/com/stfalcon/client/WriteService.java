@@ -163,14 +163,14 @@ public class WriteService extends Service implements SensorEventListener {
     /**
      *
      */
-    public void writeNewData(long time, final String data, int type) {
+    public void writeNewData(long time, final String data, final int type) {
 
         if (createdConnectionWrapper) {
             if (type == activSensorType) {
                 getConnectionWrapper().send(
                         new HashMap<String, String>() {{
                             put(Communication.MESSAGE_TYPE, Communication.Connect.DATA);
-                            put(Communication.Connect.DEVICE, Build.MODEL + Build.SERIAL);
+                            put(Communication.Connect.DEVICE, createDeviceDescription(type));
                             put(SampleApplication.SENSOR, data);
                         }}
                 );
@@ -198,6 +198,26 @@ public class WriteService extends Service implements SensorEventListener {
                 }
             }
         }
+    }
+
+    private String createDeviceDescription(int type) {
+        String stringType;
+        switch (type) {
+            case TYPE_A:
+                stringType = "Accel";
+                break;
+            case TYPE_F:
+                stringType = "Filter-Accel";
+                break;
+            case TYPE_L:
+            default:
+                stringType = "Linear-Accel";
+                break;
+        }
+
+        String serial = Build.SERIAL;
+        serial = serial.substring(serial.length() - 3);
+        return Build.MODEL + "-" + serial + "-" + stringType;
     }
 
 
