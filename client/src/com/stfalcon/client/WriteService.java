@@ -124,9 +124,12 @@ public class WriteService extends Service implements SensorEventListener {
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, listener);
 
 
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_UI);
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_UI);
-        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY), SensorManager.SENSOR_DELAY_UI);
+        if (activSensorType == TYPE_A | activSensorType == TYPE_F)
+            sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_UI);
+        if (activSensorType == TYPE_L)
+            sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_UI);
+        if (activSensorType == TYPE_G)
+            sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY), SensorManager.SENSOR_DELAY_UI);
     }
 
 
@@ -285,8 +288,8 @@ public class WriteService extends Service implements SensorEventListener {
 
         if (sensorEvent.sensor.getType() == Sensor.TYPE_GRAVITY) {
 
-            for(int i=0; i<3; i++) {
-                gravity [i] = (float) (0.1 * sensorEvent.values[i] + 0.9 * gravity[i]);
+            for (int i = 0; i < 3; i++) {
+                gravity[i] = (float) (0.1 * sensorEvent.values[i] + 0.9 * gravity[i]);
                 motion[i] = sensorEvent.values[i] - gravity[i];
             }
 

@@ -10,7 +10,6 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RadioButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
 public class MyActivity extends Activity implements View.OnClickListener {
@@ -45,6 +44,23 @@ public class MyActivity extends Activity implements View.OnClickListener {
         fAccel.setOnClickListener(this);
         lAccel.setOnClickListener(this);
         gravity.setOnClickListener(this);
+
+
+        switch (SampleApplication.getInstance().getSendedType()) {
+            case WriteService.TYPE_A:
+                accel.setChecked(true);
+                break;
+            case WriteService.TYPE_F:
+                fAccel.setChecked(true);
+                break;
+            case WriteService.TYPE_L:
+                lAccel.setChecked(true);
+                break;
+            case WriteService.TYPE_G:
+                gravity.setChecked(true);
+                break;
+        }
+
 
         intentService = new Intent(this, WriteService.class);
 
