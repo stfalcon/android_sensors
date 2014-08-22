@@ -88,6 +88,7 @@ public class WriteService extends Service {
      *
      */
     public void connect() {
+        try{
         if (createdConnectionWrapper) {
             getConnectionWrapper().findServers(new NetworkDiscovery.OnFoundListener() {
                 @Override
@@ -103,6 +104,9 @@ public class WriteService extends Service {
                     }
                 }
             });
+        }
+        } catch (Exception e){
+            e.printStackTrace();
         }
     }
 
