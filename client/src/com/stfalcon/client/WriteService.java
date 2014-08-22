@@ -168,10 +168,15 @@ public class WriteService extends Service implements SensorEventListener {
     /**
      *
      */
-    public void writeNewData(final long time, final String data, final int type) {
+    public void writeNewData(final long time, String data, final int type) {
 
         if (createdConnectionWrapper) {
             if (type == activSensorType) {
+                if (previousBestLocation != null) {
+                    String loc = " " + previousBestLocation.getLatitude() + " " + previousBestLocation.getLongitude();
+                    data += loc;
+                }
+
                 dataToSend.add(data);
 
                 if (time - lastSendingTime > SENDING_DATA_INTERVAL_IN_MILLIS){
@@ -197,26 +202,23 @@ public class WriteService extends Service implements SensorEventListener {
                 }
             }
         } else {
-
-            if (previousBestLocation != null) {
-                String loc = " lat" + previousBestLocation.getLatitude() + " " + "lon" + previousBestLocation.getLongitude();
-                try {
-                    String location = String.valueOf(time) + loc + "\n";
-                    outputStreamWriterGPS.write(location);
-                    switch (type) {
-                        case TYPE_A:
-                            outputStreamWriterA.write(data);
-                            break;
-                        case TYPE_F:
-                            outputStreamWriterS.write(data);
-                            break;
-                        case TYPE_L:
-                            outputStreamWriterL.write(data);
-                            break;
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
+            String loc = " lat" + previousBestLocation.getLatitude() + " " + "lon" + previousBestLocation.getLongitude();
+            try {
+                String location = String.valueOf(time) + loc + "\n";
+                outputStreamWriterGPS.write(location);
+                switch (type) {
+                    case TYPE_A:
+                        outputStreamWriterA.write(data);
+                        break;
+                    case TYPE_F:
+                        outputStreamWriterS.write(data);
+                        break;
+                    case TYPE_L:
+                        outputStreamWriterL.write(data);
+                        break;
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }

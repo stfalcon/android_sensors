@@ -306,11 +306,21 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     sendingTime = currentTime - lastTime;
 
                     for (String currentData : datas) {
-                        arr = currentData.split(" ", 4);
+                        arr = currentData.split(" ", 6);
                         long readDataTime = Long.valueOf(arr[0]);
                         float x = Float.valueOf(arr[1]);
                         float y = Float.valueOf(arr[2]);
                         float z = Float.valueOf(arr[3]);
+
+                        try {
+                            double lat, lon;
+                            lat = Double.valueOf(arr[4]);
+                            lon = Double.valueOf(arr[5]);
+
+                            //TODO: diaplay on Map
+                        } catch (NumberFormatException e) {
+                            e.printStackTrace();
+                        }
 
                         long graphTime = sendingTime + readDataTime;
 
