@@ -20,6 +20,7 @@ import org.achartengine.model.XYMultipleSeriesDataset;
 import org.achartengine.model.XYValueSeries;
 import org.achartengine.renderer.XYMultipleSeriesRenderer;
 import org.achartengine.renderer.XYSeriesRenderer;
+import org.achartengine.util.MathHelper;
 
 import java.io.*;
 import java.text.SimpleDateFormat;
@@ -291,24 +292,22 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         devices.add(information);
                     }
 
-                    if (information.xSeries.getMaxX() + 1000 < time)  {
-                        createAndAddXSeriesAndRenderer(information);
-                    }
+                    if (information.xSeries.getMaxX() + 1000 < time)
+                        information.xSeries.add(time - 500, MathHelper.NULL_VALUE);
                     if (information.ySeries.getMaxX() + 1000 < time)
-                        createAndAddYSeriesAndRenderer(information);
+                        information.ySeries.add(time - 500, MathHelper.NULL_VALUE);
                     if (information.zSeries.getMaxX() + 1000 < time)
-                        createAndAddZSeriesAndRenderer(information);
+                        information.zSeries.add(time - 500, MathHelper.NULL_VALUE);
                     if (information.sqrSeries.getMaxX() + 1000 < time)
-                        information.xSeries.clearAnnotations();
-                        createAndAddSqrSeriesAndRenderer(information);
+                        information.sqrSeries.add(time - 500, MathHelper.NULL_VALUE);
 
-
-                    information.xSeries.add(time, x);
-                    information.ySeries.add(time, y);
-                    information.zSeries.add(time, z);
-                    information.sqrSeries.add(time, Math.sqrt(x * x + y * y + z * z));
 
                     if (!pause){
+                        information.xSeries.add(time, x);
+                        information.ySeries.add(time, y);
+                        information.zSeries.add(time, z);
+                        information.sqrSeries.add(time, Math.sqrt(x * x + y * y + z * z));
+
                         renderer.setXAxisMin(System.currentTimeMillis() - 10000);
                         renderer.setXAxisMax(System.currentTimeMillis() + 500);
                         graphicalView.repaint();

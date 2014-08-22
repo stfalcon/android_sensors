@@ -30,6 +30,11 @@
                          android:id="@+id/type_la"
                          android:text="LINEAR_ACCELERATION"/>
 
+            <RadioButton android:layout_width="wrap_content"
+                         android:layout_height="wrap_content"
+                         android:id="@+id/type_g"
+                         android:text="GRAVITY"/>
+
         </RadioGroup>
 
         <TextView

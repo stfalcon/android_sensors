@@ -21,8 +21,6 @@ import java.util.HashMap;
  * Created by alexandr on 19.08.14.
  */
 public class WriteService extends Service {
-    private static final int THREE_MINUTES = 1000 * 60 * 3;
-    private int NOTIFICATION = 1000;
     public WriteBinder binder = new WriteBinder();
 
 
@@ -156,9 +154,17 @@ public class WriteService extends Service {
 
                     getConnectionWrapper().send(
                             new HashMap<String, String>() {{
-                                put(Communication.MESSAGE_TYPE, Communication.ConnectSuccess.TYPE);
+                                put(Communication.MESSAGE_TYPE, Communication.Connect.SUCCESS);
                             }}
                     );
+                }
+
+                if (type.equals(Communication.Connect.SUCCESS)) {
+
+                    Intent intentTracking = new Intent(SampleApplication.CONNECTED);
+                    intentTracking.putExtra(SampleApplication.DEVICE, "connect");
+                    LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
+
                 }
 
 

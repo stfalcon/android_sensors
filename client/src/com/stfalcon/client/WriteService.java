@@ -44,6 +44,9 @@ public class WriteService extends Service implements SensorEventListener {
     public static final int TYPE_A = 0;   // ACCELEROMETER
     public static final int TYPE_F = 1;   // FILTRATE_ACCELEROMETER
     public static final int TYPE_L = 2;   // LINEAR_ACCELERATION
+    public static final int TYPE_G = 3;   // GRAVITY
+    private float[] motion = new float[3];
+    private float[] gravity = new float[3];
     private int activSensorType;
 
     private SensorManager sensorManager;
@@ -79,38 +82,41 @@ public class WriteService extends Service implements SensorEventListener {
         startForeground(NOTIFICATION, makeNotification());
         Log.v("Loger", "START_DONE");
 
-        try {
+        if (!createdConnectionWrapper) {
 
-            File directory = new File("/sdcard/AccelData/");
-            directory.mkdirs();
+            try {
 
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            String time = simpleDateFormat.format(System.currentTimeMillis());
+                File directory = new File("/sdcard/AccelData/");
+                directory.mkdirs();
 
-            File myFileA = new File("/sdcard/AccelData/" + time + "Data_ACCELEROMETER.txt");
-            myFileA.createNewFile();
-            FileOutputStream fOutA = new FileOutputStream(myFileA);
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                String time = simpleDateFormat.format(System.currentTimeMillis());
 
-            File myFileS = new File("/sdcard/AccelData/" + time + "Data_FILTRATE_ACCELEROMETER.txt");
-            myFileS.createNewFile();
-            FileOutputStream fOutS = new FileOutputStream(myFileS);
+                File myFileA = new File("/sdcard/AccelData/" + time + "Data_ACCELEROMETER.txt");
+                myFileA.createNewFile();
+                FileOutputStream fOutA = new FileOutputStream(myFileA);
 
-            File myFileL = new File("/sdcard/AccelData/" + time + "Data_LINEAR_ACCELERATION.txt");
-            myFileL.createNewFile();
-            FileOutputStream fOutL = new FileOutputStream(myFileL);
+                File myFileS = new File("/sdcard/AccelData/" + time + "Data_FILTRATE_ACCELEROMETER.txt");
+                myFileS.createNewFile();
+                FileOutputStream fOutS = new FileOutputStream(myFileS);
 
-            File myFileGPS = new File("/sdcard/AccelData/" + time + "Data_GPS.txt");
-            myFileGPS.createNewFile();
-            FileOutputStream fOutGPS = new FileOutputStream(myFileGPS);
+                File myFileL = new File("/sdcard/AccelData/" + time + "Data_LINEAR_ACCELERATION.txt");
+                myFileL.createNewFile();
+                FileOutputStream fOutL = new FileOutputStream(myFileL);
 
-            outputStreamWriterA = new OutputStreamWriter(fOutA);
-            outputStreamWriterS = new OutputStreamWriter(fOutS);
-            outputStreamWriterL = new OutputStreamWriter(fOutL);
-            outputStreamWriterGPS = new OutputStreamWriter(fOutGPS);
-        } catch (IOException e) {
-            e.printStackTrace();
+                File myFileGPS = new File("/sdcard/AccelData/" + time + "Data_GPS.txt");
+                myFileGPS.createNewFile();
+                FileOutputStream fOutGPS = new FileOutputStream(myFileGPS);
+
+                outputStreamWriterA = new OutputStreamWriter(fOutA);
+                outputStreamWriterS = new OutputStreamWriter(fOutS);
+                outputStreamWriterL = new OutputStreamWriter(fOutL);
+                outputStreamWriterGPS = new OutputStreamWriter(fOutGPS);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
         }
-
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         listener = new MyLocationListener();
@@ -120,6 +126,7 @@ public class WriteService extends Service implements SensorEventListener {
 
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_UI);
         sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_UI);
+        sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY), SensorManager.SENSOR_DELAY_UI);
     }
 
 
@@ -130,15 +137,18 @@ public class WriteService extends Service implements SensorEventListener {
 
         stopForeground(true);
 
-        try {
-            outputStreamWriterA.close();
-            outputStreamWriterS.close();
-            outputStreamWriterL.close();
-            outputStreamWriterGPS.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (NullPointerException e) {
-            e.printStackTrace();
+        if (!createdConnectionWrapper) {
+
+            try {
+                outputStreamWriterA.close();
+                outputStreamWriterS.close();
+                outputStreamWriterL.close();
+                outputStreamWriterGPS.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            }
         }
 
         if (listener != null) {
@@ -241,6 +251,7 @@ public class WriteService extends Service implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
+
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
 
             long time = System.currentTimeMillis();
@@ -289,6 +300,24 @@ public class WriteService extends Service implements SensorEventListener {
 
             writeNewData(time, dataL, WriteService.TYPE_L);
 
+        }
+
+
+        if (sensorEvent.sensor.getType() == Sensor.TYPE_GRAVITY) {
+
+            for(int i=0; i<3; i++) {
+                gravity [i] = (float) (0.1 * sensorEvent.values[i] + 0.9 * gravity[i]);
+                motion[i] = sensorEvent.values[i] - gravity[i];
+            }
+
+            long time = System.currentTimeMillis();
+            float x = round(motion[0], 3);
+            float y = round(motion[1], 3);
+            float z = round(motion[2], 3);
+
+            String dataL = time + " " + x + " " + y + " " + z + "\n";
+
+            writeNewData(time, dataL, WriteService.TYPE_G);
         }
     }
 
@@ -488,9 +517,18 @@ public class WriteService extends Service implements SensorEventListener {
 
                     getConnectionWrapper().send(
                             new HashMap<String, String>() {{
-                                put(Communication.MESSAGE_TYPE, Communication.ConnectSuccess.TYPE);
+                                put(Communication.MESSAGE_TYPE, Communication.Connect.SUCCESS);
                             }}
                     );
+                }
+
+
+                if (type.equals(Communication.Connect.SUCCESS)) {
+
+                    Intent intentTracking = new Intent(SampleApplication.CONNECTED);
+                    intentTracking.putExtra(SampleApplication.DEVICE, "connect");
+                    LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
+
                 }
 
 
