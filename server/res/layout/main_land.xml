@@ -117,5 +117,41 @@
              android:layout_centerVertical="true"
              android:text="Show Map"/>
 
+
+    <SeekBar
+            android:layout_width="300dp"
+            android:layout_height="wrap_content"
+            android:max="30"
+            android:progress="13"
+            android:id="@+id/seek_bar"
+            android:layout_centerHorizontal="true"
+            android:layout_alignParentBottom="true"
+            android:visibility="gone"/>
+
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/green"
+            android:textColor="@android:color/holo_green_dark"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"/>
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/yellow"
+            android:textColor="@android:color/holo_orange_light"
+            android:layout_alignParentLeft="true"
+            android:layout_above="@+id/green"/>
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/red"
+            android:textColor="@android:color/holo_red_light"
+            android:layout_alignParentLeft="true"
+            android:layout_above="@+id/yellow"/>
+
 </RelativeLayout>
 

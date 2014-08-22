@@ -1,28 +1,29 @@
 package com.stfalcon.server;
 
-import android.app.Activity;
-import android.content.Context;
-import android.location.LocationManager;
+import android.view.View;
+import android.widget.SeekBar;
+import android.widget.TextView;
 import android.widget.Toast;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.*;
+
+import java.util.ArrayList;
 
 /**
  * Created by alexandr on 22.08.14.
  */
 public class MapHelper {
 
-    private Activity activity;
+    private MyActivity activity;
     private GoogleMap googleMap;
+    private SeekBar seekBar;
+    private ArrayList<Marker> markers = new ArrayList<Marker>();
 
-    private float green_pin = 13;
-    private float yellow_pin = 20;
+    public double green_pin = 13;
+    public double yellow_pin = green_pin * 1.5;
 
-    public MapHelper(Activity activity){
+    public MapHelper(MyActivity activity){
            this.activity = activity;
     }
 
@@ -41,7 +42,7 @@ public class MapHelper {
                 return;
             }
         }
-        googleMap.getUiSettings().setZoomControlsEnabled(true);
+        googleMap.getUiSettings().setZoomControlsEnabled(false);
         googleMap.setMyLocationEnabled(true);
 
         googleMap.setOnCameraChangeListener(new GoogleMap.OnCameraChangeListener() {
@@ -50,6 +51,28 @@ public class MapHelper {
 
             }
         });
+
+        seekBar = (SeekBar) activity.findViewById(R.id.seek_bar);
+        seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                repaintMarkers(i);
+                ((TextView)activity.findViewById(R.id.green)).setText("< " + green_pin);
+                ((TextView)activity.findViewById(R.id.yellow)).setText("> " + green_pin + " <" + yellow_pin);
+                ((TextView)activity.findViewById(R.id.red)).setText("> " + yellow_pin);
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
 
     }
 
@@ -71,7 +94,26 @@ public class MapHelper {
             options.icon(BitmapDescriptorFactory.fromResource(R.drawable.red_pin));
         }
 
-        googleMap.addMarker(options);
+        options.title(String.valueOf(pit));
+
+        Marker marker = googleMap.addMarker(options);
+        markers.add(marker);
+    }
+
+
+
+    private void repaintMarkers(int green_pin){
+        this.green_pin = green_pin;
+        yellow_pin = green_pin * 1.5;
+
+        googleMap.clear();
+
+        int count = markers.size();
+        for (int i = 0; i < count; i++){
+            addPoint(markers.get(i).getPosition().latitude,
+                    markers.get(i).getPosition().longitude,
+                    Float.valueOf(markers.get(i).getTitle()));
+        }
 
     }
 }
