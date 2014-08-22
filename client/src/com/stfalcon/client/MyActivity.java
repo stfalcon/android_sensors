@@ -16,13 +16,12 @@ import android.widget.Toast;
 public class MyActivity extends Activity implements View.OnClickListener {
 
     private Button start, stop, client;
-    private RadioButton accel, lAccel, fAccel;
+    private RadioButton accel, lAccel, fAccel, gravity;
     private ServiceConnection sConn;
     private WriteService writeServise;
     private boolean bound = false;
     private Intent intentService;
     private BroadcastReceiver mReceiver;
-    private TextView textView, tvFilterValue;
 
 
     /**
@@ -35,16 +34,17 @@ public class MyActivity extends Activity implements View.OnClickListener {
         start = (Button) findViewById(R.id.start);
         stop = (Button) findViewById(R.id.stop);
         client = (Button) findViewById(R.id.client);
-        textView = (TextView) findViewById(R.id.text);
         accel = (RadioButton) findViewById(R.id.type_a);
         fAccel = (RadioButton) findViewById(R.id.type_fa);
         lAccel = (RadioButton) findViewById(R.id.type_la);
+        gravity = (RadioButton) findViewById(R.id.type_g);
         start.setOnClickListener(this);
         stop.setOnClickListener(this);
         client.setOnClickListener(this);
         accel.setOnClickListener(this);
         fAccel.setOnClickListener(this);
         lAccel.setOnClickListener(this);
+        gravity.setOnClickListener(this);
 
         intentService = new Intent(this, WriteService.class);
 
@@ -119,6 +119,10 @@ public class MyActivity extends Activity implements View.OnClickListener {
                     SampleApplication.getInstance().setSendetType(WriteService.TYPE_L);
                     break;
 
+                case R.id.type_g:
+                    SampleApplication.getInstance().setSendetType(WriteService.TYPE_G);
+                    break;
+
             }
         }
     }
@@ -139,19 +143,7 @@ public class MyActivity extends Activity implements View.OnClickListener {
                     return;
                 }
 
-
-                if (intent.hasExtra(SampleApplication.STARTED)) {
-                    textView.setText("Start listening... \n");
-                    //startActivity(new Intent(MyActivity.this, GraphicActivity.class));
-                    return;
-                }
-
                 if (intent.hasExtra(SampleApplication.DEVICE)) {
-
-                    Toast.makeText(MyActivity.this,
-                            intent.getStringExtra(SampleApplication.DEVICE),
-                            Toast.LENGTH_LONG).show();
-                } else {
                     Toast.makeText(MyActivity.this,
                             getString(R.string.connected),
                             Toast.LENGTH_LONG).show();
