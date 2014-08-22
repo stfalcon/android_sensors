@@ -28,13 +28,15 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * Created by alexandr on 19.08.14.
  */
 public class WriteService extends Service implements SensorEventListener {
     private static final int THREE_MINUTES = 1000 * 60 * 3;
+    private static final long SENDING_DATA_INTERVAL_IN_MILLIS = 1000;
+
     private int NOTIFICATION = 1000;
     private OutputStreamWriter outputStreamWriterA;
     private OutputStreamWriter outputStreamWriterS;
@@ -54,6 +56,9 @@ public class WriteService extends Service implements SensorEventListener {
     public MyLocationListener listener;
     public Location previousBestLocation = null;
     private boolean createdConnectionWrapper = false;
+
+    private List<String> dataToSend = new ArrayList<String>();
+    private long lastSendingTime = 0l;
 
     @Override
     public void onCreate() {
@@ -163,17 +168,33 @@ public class WriteService extends Service implements SensorEventListener {
     /**
      *
      */
-    public void writeNewData(long time, final String data, final int type) {
+    public void writeNewData(final long time, final String data, final int type) {
 
         if (createdConnectionWrapper) {
             if (type == activSensorType) {
-                getConnectionWrapper().send(
-                        new HashMap<String, String>() {{
-                            put(Communication.MESSAGE_TYPE, Communication.Connect.DATA);
-                            put(Communication.Connect.DEVICE, createDeviceDescription(type));
-                            put(SampleApplication.SENSOR, data);
-                        }}
-                );
+                dataToSend.add(data);
+
+                if (time - lastSendingTime > SENDING_DATA_INTERVAL_IN_MILLIS){
+                    String stringData = "";
+
+                    for (String string : dataToSend){
+                        stringData += string;
+                        Log.i("logerr", "data = " + string);
+                    }
+
+                    final String stringDataToSend = stringData;
+
+                    getConnectionWrapper().send(
+                            new HashMap<String, String>() {{
+                                put(Communication.MESSAGE_TYPE, Communication.Connect.DATA);
+                                put(Communication.Connect.DEVICE, createDeviceDescription(type));
+                                put(SampleApplication.SENSOR, stringDataToSend);
+                            }}
+                    );
+
+                    lastSendingTime = time;
+                    dataToSend.clear();
+                }
             }
         } else {
 
@@ -256,14 +277,15 @@ public class WriteService extends Service implements SensorEventListener {
 
     @Override
     public void onSensorChanged(SensorEvent sensorEvent) {
+        if (lastSendingTime == 0)
+            lastSendingTime = System.currentTimeMillis();
+
+        long time = System.currentTimeMillis() - lastSendingTime;
 
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-
-            long time = System.currentTimeMillis();
             float x = round(sensorEvent.values[0], 3);
             float y = round(sensorEvent.values[1], 3);
             float z = round(sensorEvent.values[2], 3);
-
 
             // alpha is calculated as t / (t + dT)
             // with t, the low-pass filter's time-constant
@@ -288,22 +310,21 @@ public class WriteService extends Service implements SensorEventListener {
 
             //Log.i("Loger", dataA);
 
-            writeNewData(time, dataA, WriteService.TYPE_A);
-            writeNewData(time, dataF, WriteService.TYPE_F);
+            writeNewData(System.currentTimeMillis(), dataA, WriteService.TYPE_A);
+            writeNewData(System.currentTimeMillis(), dataF, WriteService.TYPE_F);
 
 
         }
 
         if (sensorEvent.sensor.getType() == Sensor.TYPE_LINEAR_ACCELERATION) {
 
-            long time = System.currentTimeMillis();
             float x = round(sensorEvent.values[0], 3);
             float y = round(sensorEvent.values[1], 3);
             float z = round(sensorEvent.values[2], 3);
 
             String dataL = time + " " + x + " " + y + " " + z + "\n";
 
-            writeNewData(time, dataL, WriteService.TYPE_L);
+            writeNewData(System.currentTimeMillis(), dataL, WriteService.TYPE_L);
 
         }
 
@@ -315,14 +336,13 @@ public class WriteService extends Service implements SensorEventListener {
                 motion[i] = sensorEvent.values[i] - gravity[i];
             }
 
-            long time = System.currentTimeMillis();
             float x = round(motion[0], 3);
             float y = round(motion[1], 3);
             float z = round(motion[2], 3);
 
             String dataL = time + " " + x + " " + y + " " + z + "\n";
 
-            writeNewData(time, dataL, WriteService.TYPE_G);
+            writeNewData(System.currentTimeMillis(), dataL, WriteService.TYPE_G);
         }
     }
 
