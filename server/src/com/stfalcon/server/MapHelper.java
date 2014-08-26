@@ -97,7 +97,7 @@ public class MapHelper {
                 options.icon(BitmapDescriptorFactory.fromResource(R.drawable.red_pin));
             }
 
-            options.title(String.valueOf(pit) + "|" + String.valueOf(speed));
+            options.title(String.valueOf(pit) + " " + String.valueOf(speed));
 
             Marker marker = googleMap.addMarker(options);
             markers.add(marker);
@@ -124,20 +124,25 @@ public class MapHelper {
 
 
     private void repaintMarkers(){
-        googleMap.clear();
 
-        ArrayList<Marker> copyMarkers = new ArrayList<Marker>(markers);
-
-        markers.clear();
-
-        for (Marker marker : copyMarkers){
+        for (Marker marker : markers){
             try {
-            String[] arr = marker.getTitle().split("|", 2);
-            addPoint(marker.getPosition().latitude,
-                    marker.getPosition().longitude,
-                    Float.valueOf(arr[0]),
-                    Double.valueOf(arr[1])
-                    , false);
+                String[] arr = marker.getTitle().split(" ", 2);
+                float pit = Float.valueOf(arr[0]);
+
+
+                if (pit < green_pin){
+                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.green_pin));
+                }
+
+                if (pit >= green_pin && pit <= yellow_pin){
+                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin));
+                }
+
+                if (pit > yellow_pin){
+                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.red_pin));
+                }
+
             } catch (NumberFormatException e){
                 e.printStackTrace();
             }
