@@ -335,7 +335,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     long sendingTime;
 
                     String data = datas[datas.length - 1];
-                    Log.i("logerr", data);
                     String[] arr = data.split(" ", 6);
                     long lastTime = Long.valueOf(arr[0]);
                     sendingTime = currentTime - lastTime;
