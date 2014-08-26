@@ -171,6 +171,8 @@ public class MyActivity extends Activity implements View.OnClickListener {
                 if (intent.hasExtra(SampleApplication.SPEED)) {
                     String speed = intent.getStringExtra(SampleApplication.SPEED);
                     tvSpeed.setText(speed);
+                    tvSpeed.invalidate();
+                   // Log.i("Loger", "SPEED " + speed);
                 }
             }
         };

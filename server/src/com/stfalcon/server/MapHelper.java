@@ -78,7 +78,7 @@ public class MapHelper {
     }
 
 
-    public void addPoint(double lat, double lon , float pit, boolean newPoint){
+    public void addPoint(double lat, double lon , float pit, double speed, boolean newPoint){
 
         if (!newPoint || needAddMarker(lat, lon)){
 
@@ -97,7 +97,7 @@ public class MapHelper {
                 options.icon(BitmapDescriptorFactory.fromResource(R.drawable.red_pin));
             }
 
-            options.title(String.valueOf(pit));
+            options.title(String.valueOf(pit) + "|" + String.valueOf(speed));
 
             Marker marker = googleMap.addMarker(options);
             markers.add(marker);
@@ -131,10 +131,16 @@ public class MapHelper {
         markers.clear();
 
         for (Marker marker : copyMarkers){
+            try {
+            String[] arr = marker.getTitle().split("|", 2);
             addPoint(marker.getPosition().latitude,
                     marker.getPosition().longitude,
-                    Float.valueOf(marker.getTitle())
+                    Float.valueOf(arr[0]),
+                    Double.valueOf(arr[1])
                     , false);
+            } catch (NumberFormatException e){
+                e.printStackTrace();
+            }
         }
 
     }

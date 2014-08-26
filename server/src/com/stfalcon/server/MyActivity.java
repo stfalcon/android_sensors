@@ -335,12 +335,12 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     long sendingTime;
 
                     String data = datas[datas.length - 1];
-                    String[] arr = data.split(" ", 6);
+                    String[] arr = data.split(" ", 7);
                     long lastTime = Long.valueOf(arr[0]);
                     sendingTime = currentTime - lastTime;
 
                     for (String currentData : datas) {
-                        arr = currentData.split(" ", 6);
+                        arr = currentData.split(" ", 7);
                         long readDataTime = Long.valueOf(arr[0]);
                         float x = Float.valueOf(arr[1]);
                         float y = Float.valueOf(arr[2]);
@@ -348,9 +348,10 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         float sqr = (float) Math.sqrt(x * x + y * y + z * z);
 
                         try {
-                            double lat, lon;
+                            double lat, lon, speed;
                             lat = Double.valueOf(arr[4]);
                             lon = Double.valueOf(arr[5]);
+                            speed = Double.valueOf(arr[6]);
 
                             float pit;
 
@@ -371,7 +372,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                             }
 
-                            mapHelper.addPoint(lat, lon, pit, true);
+                            mapHelper.addPoint(lat, lon, pit, speed, true);
                         } catch (NumberFormatException e) {
                             e.printStackTrace();
                         }

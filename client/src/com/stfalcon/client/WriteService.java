@@ -65,6 +65,7 @@ public class WriteService extends Service implements SensorEventListener {
     float appliedAcceleration = 0;
     float currentAcceleration = 0;
     float velocity = 0;
+    double kmh = 0;
     Date lastUpdate;
     double calibration;
 
@@ -84,10 +85,15 @@ public class WriteService extends Service implements SensorEventListener {
         velocity += deltaVelocity;
 
 
-        final double mph = (Math.round(100*velocity / 1.6 * 3.6))/100;
+    }
+
+    private void updateGUISpeed() {
+
+        // Convert from meters per second to kilometers per hour.\
+        kmh = (Math.round(100*velocity / 1.6))/100;
 
         Intent intentTracking = new Intent(SampleApplication.CONNECTED);
-        intentTracking.putExtra(SampleApplication.SPEED, String.valueOf(mph));
+        intentTracking.putExtra(SampleApplication.SPEED, String.valueOf(kmh));
         LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
     }
 
@@ -117,7 +123,15 @@ public class WriteService extends Service implements SensorEventListener {
     }
 
     public void startListening() {
-        calibration = Double.NaN;
+       // calibration = Double.NaN;
+
+        Timer updateTimer = new Timer("velocityUpdate");
+        updateTimer.scheduleAtFixedRate(new TimerTask() {
+            public void run() {
+                updateGUISpeed();
+            }
+        }, 0, 1000);
+
         activSensorType = SampleApplication.getInstance().getSendedType();
         startForeground(NOTIFICATION, makeNotification());
         Log.v("Loger", "START_DONE");
@@ -164,7 +178,6 @@ public class WriteService extends Service implements SensorEventListener {
         locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0, listener);
 
 
-        if (activSensorType == TYPE_A | activSensorType == TYPE_F)
             sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER), SensorManager.SENSOR_DELAY_UI);
         if (activSensorType == TYPE_L)
             sensorManager.registerListener(this, sensorManager.getDefaultSensor(Sensor.TYPE_LINEAR_ACCELERATION), SensorManager.SENSOR_DELAY_UI);
@@ -208,7 +221,7 @@ public class WriteService extends Service implements SensorEventListener {
         if (createdConnectionWrapper) {
             if (type == activSensorType && previousBestLocation != null && data != null) {
                 String loc = " " + previousBestLocation.getLatitude() + " " + previousBestLocation.getLongitude();
-                data = data + loc + "\n";
+                data = data + loc + " " + String.valueOf(kmh) + "\n";
 
                 dataToSend.add(data);
 
@@ -314,25 +327,26 @@ public class WriteService extends Service implements SensorEventListener {
         if (lastSendingTime == 0)
             lastSendingTime = System.currentTimeMillis();
 
-        //speedometer
-        double x_ = sensorEvent.values[0];
-        double y_ = sensorEvent.values[1];
-        double z_ = sensorEvent.values[2];
-
-        double a = Math.sqrt(Math.pow(x_, 2) + Math.pow(y_, 2) + Math.pow(z_, 2));
-
-        if (calibration == Double.NaN)
-            calibration = a;
-        else {
-            updateVelocity();
-            currentAcceleration = (float)a;
-        }
-
 
 
         long time = System.currentTimeMillis() - lastSendingTime;
 
         if (sensorEvent.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+
+
+            //speedometer
+            double x_ = sensorEvent.values[0];
+            double y_ = sensorEvent.values[1];
+            double z_ = sensorEvent.values[2];
+
+            double a = -1
+                    * Math.sqrt(Math.pow(x_, 2) + Math.pow(y_, 2)
+                    + Math.pow(z_, 2));
+            currentAcceleration = (float)a;
+            updateVelocity();
+
+
+
             float x = round(sensorEvent.values[0], 3);
             float y = round(sensorEvent.values[1], 3);
             float z = round(sensorEvent.values[2], 3);
