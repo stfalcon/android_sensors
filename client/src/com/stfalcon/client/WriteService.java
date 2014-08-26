@@ -168,18 +168,20 @@ public class WriteService extends Service implements SensorEventListener {
     /**
      *
      */
-    public void writeNewData(final long time, final String data, final int type) {
+    public void writeNewData(final long time, String data, final int type) {
 
         if (createdConnectionWrapper) {
-            if (type == activSensorType) {
+            if (type == activSensorType && previousBestLocation != null && data != null) {
+                String loc = " " + previousBestLocation.getLatitude() + " " + previousBestLocation.getLongitude();
+                data = data + loc + "\n";
+
                 dataToSend.add(data);
 
-                if (time - lastSendingTime > SENDING_DATA_INTERVAL_IN_MILLIS){
+                if (time - lastSendingTime > SENDING_DATA_INTERVAL_IN_MILLIS) {
                     String stringData = "";
 
-                    for (String string : dataToSend){
+                    for (String string : dataToSend) {
                         stringData += string;
-                        Log.i("logerr", "data = " + string);
                     }
 
                     final String stringDataToSend = stringData;
@@ -197,26 +199,23 @@ public class WriteService extends Service implements SensorEventListener {
                 }
             }
         } else {
-
-            if (previousBestLocation != null) {
-                String loc = " lat" + previousBestLocation.getLatitude() + " " + "lon" + previousBestLocation.getLongitude();
-                try {
-                    String location = String.valueOf(time) + loc + "\n";
-                    outputStreamWriterGPS.write(location);
-                    switch (type) {
-                        case TYPE_A:
-                            outputStreamWriterA.write(data);
-                            break;
-                        case TYPE_F:
-                            outputStreamWriterS.write(data);
-                            break;
-                        case TYPE_L:
-                            outputStreamWriterL.write(data);
-                            break;
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
+            String loc = " lat" + previousBestLocation.getLatitude() + " " + "lon" + previousBestLocation.getLongitude();
+            try {
+                String location = String.valueOf(time) + loc + "\n";
+                outputStreamWriterGPS.write(location);
+                switch (type) {
+                    case TYPE_A:
+                        outputStreamWriterA.write(data);
+                        break;
+                    case TYPE_F:
+                        outputStreamWriterS.write(data);
+                        break;
+                    case TYPE_L:
+                        outputStreamWriterL.write(data);
+                        break;
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -305,8 +304,8 @@ public class WriteService extends Service implements SensorEventListener {
             linear_acceleration[1] = round(sensorEvent.values[1] - gravity[1], 3);
             linear_acceleration[2] = round(sensorEvent.values[2] - gravity[2], 3);
 
-            String dataF = time + " " + linear_acceleration[0] + " " + linear_acceleration[1] + " " + linear_acceleration[2] + "\n";
-            String dataA = time + " " + x + " " + y + " " + z + "\n";
+            String dataF = time + " " + linear_acceleration[0] + " " + linear_acceleration[1] + " " + linear_acceleration[2];
+            String dataA = time + " " + x + " " + y + " " + z;
 
             //Log.i("Loger", dataA);
 
@@ -322,7 +321,7 @@ public class WriteService extends Service implements SensorEventListener {
             float y = round(sensorEvent.values[1], 3);
             float z = round(sensorEvent.values[2], 3);
 
-            String dataL = time + " " + x + " " + y + " " + z + "\n";
+            String dataL = time + " " + x + " " + y + " " + z;
 
             writeNewData(System.currentTimeMillis(), dataL, WriteService.TYPE_L);
 
@@ -340,7 +339,7 @@ public class WriteService extends Service implements SensorEventListener {
             float y = round(motion[1], 3);
             float z = round(motion[2], 3);
 
-            String dataL = time + " " + x + " " + y + " " + z + "\n";
+            String dataL = time + " " + x + " " + y + " " + z;
 
             writeNewData(System.currentTimeMillis(), dataL, WriteService.TYPE_G);
         }
@@ -493,7 +492,7 @@ public class WriteService extends Service implements SensorEventListener {
                     }
                 });
             }
-        } catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
