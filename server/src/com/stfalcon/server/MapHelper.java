@@ -1,5 +1,6 @@
 package com.stfalcon.server;
 
+import android.util.Log;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
  * Created by alexandr on 22.08.14.
  */
 public class MapHelper {
+    private static final double MIN_LOCATION_DIFFERENCE = 0.01;
 
     private MyActivity activity;
     private GoogleMap googleMap;
@@ -76,40 +78,63 @@ public class MapHelper {
     }
 
 
-    public void addPoint(double lat, double lon , float pit){
+    public void addPoint(double lat, double lon , float pit, boolean newPoint){
 
-        MarkerOptions options =  new MarkerOptions();
-        options.position(new LatLng(lat, lon));
+        if (!newPoint || needAddMarker(lat, lon)){
 
-        if (pit < green_pin){
-            options.icon(BitmapDescriptorFactory.fromResource(R.drawable.green_pin));
+            MarkerOptions options =  new MarkerOptions();
+            options.position(new LatLng(lat, lon));
+
+            if (pit < green_pin){
+                options.icon(BitmapDescriptorFactory.fromResource(R.drawable.green_pin));
+            }
+
+            if (pit <= green_pin && pit <= yellow_pin){
+                options.icon(BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin));
+            }
+
+            if (pit > yellow_pin){
+                options.icon(BitmapDescriptorFactory.fromResource(R.drawable.red_pin));
+            }
+
+            options.title(String.valueOf(pit));
+
+            Marker marker = googleMap.addMarker(options);
+            markers.add(marker);
         }
+    }
 
-        if (pit <= green_pin && pit <= yellow_pin){
-            options.icon(BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin));
+    private boolean needAddMarker(double lat, double lon) {
+        if (markers.isEmpty()){
+            return true;
+        } else {
+
+            Marker lastMarker = markers.get(markers.size() - 1);
+
+            double lastLat = lastMarker.getPosition().latitude;
+            double lastLon = lastMarker.getPosition().longitude;
+
+            if (Math.abs(lastLat - lat) > MIN_LOCATION_DIFFERENCE
+                    && Math.abs(lastLon - lon) > MIN_LOCATION_DIFFERENCE)
+                return true;
+            else
+                return false;
         }
-
-        if (pit > yellow_pin){
-            options.icon(BitmapDescriptorFactory.fromResource(R.drawable.red_pin));
-        }
-
-        options.title(String.valueOf(pit));
-
-        Marker marker = googleMap.addMarker(options);
-        markers.add(marker);
     }
 
 
-
     private void repaintMarkers(){
-
         googleMap.clear();
 
-        int count = markers.size();
-        for (int i = 0; i < count; i++){
-            addPoint(markers.get(i).getPosition().latitude,
-                    markers.get(i).getPosition().longitude,
-                    Float.valueOf(markers.get(i).getTitle()));
+        ArrayList<Marker> copyMarkers = new ArrayList<Marker>(markers);
+
+        markers.clear();
+
+        for (Marker marker : copyMarkers){
+            addPoint(marker.getPosition().latitude,
+                    marker.getPosition().longitude,
+                    Float.valueOf(marker.getTitle())
+                    , false);
         }
 
     }

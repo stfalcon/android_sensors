@@ -371,7 +371,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                             }
 
-                            mapHelper.addPoint(lat, lon, pit);
+                            mapHelper.addPoint(lat, lon, pit, true);
                         } catch (NumberFormatException e) {
                             e.printStackTrace();
                         }
