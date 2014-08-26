@@ -89,7 +89,7 @@ public class MapHelper {
                 options.icon(BitmapDescriptorFactory.fromResource(R.drawable.green_pin));
             }
 
-            if (pit <= green_pin && pit <= yellow_pin){
+            if (pit >= green_pin && pit <= yellow_pin){
                 options.icon(BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin));
             }
 
