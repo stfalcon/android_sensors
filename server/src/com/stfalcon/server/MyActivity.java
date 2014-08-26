@@ -366,7 +366,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                             }
 
-                            if (information.xSeries.getItemCount() == 0){
+                            /*if (information.xSeries.getItemCount() == 0){
                                 for (int i = 0; i < 1000; i++){
                                     double demoLat, demoLon, demoSpeed;
                                     float demoPit;
@@ -378,9 +378,9 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                                     mapHelper.addPoint(demoLat, demoLon, demoPit, demoSpeed, false);
                                 }
-                            }
+                            }*/
 
-                            //mapHelper.addPoint(lat, lon, pit, speed, true);
+                            mapHelper.addPoint(lat, lon, pit, speed, true);
                         } catch (NumberFormatException e) {
                             e.printStackTrace();
                         }

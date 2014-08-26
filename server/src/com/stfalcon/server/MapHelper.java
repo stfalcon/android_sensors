@@ -124,23 +124,30 @@ public class MapHelper {
     }
 
 
-    private void repaintMarkers() {
-        googleMap.clear();
+    private void repaintMarkers(){
+        int count = markers.size();
 
-        ArrayList<Marker> copyMarkers = new ArrayList<Marker>(markers);
+        Marker marker;
 
-        markers.clear();
-
-        for (Marker marker : copyMarkers) {
+        for (int i = 0; i < count; i++){
+            marker = markers.get(i);
             try {
-                String[] arr = (marker.getTitle()).split(" ", 2);
+                String[] arr = marker.getTitle().split(" ", 2);
+                float pit = Float.valueOf(arr[0]);
 
-                addPoint(marker.getPosition().latitude,
-                        marker.getPosition().longitude,
-                        Float.valueOf(arr[0]),
-                        Double.valueOf(arr[1])
-                        , false);
-            } catch (NumberFormatException e) {
+                if (pit < green_pin){
+                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.green_pin));
+                }
+
+                if (pit >= green_pin && pit <= yellow_pin){
+                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin));
+                }
+
+                if (pit > yellow_pin){
+                    marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.red_pin));
+                }
+
+            } catch (NumberFormatException e){
                 e.printStackTrace();
             }
         }
