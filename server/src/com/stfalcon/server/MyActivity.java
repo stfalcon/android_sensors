@@ -227,6 +227,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     break;
                 case R.id.clear:
                     clearGraph();
+
+                    mapHelper.clearMarkers();
                     break;
 
 
@@ -363,6 +365,20 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                                     break;
 
                             }
+
+                            /*if (information.xSeries.getItemCount() == 0){
+                                for (int i = 0; i < 1000; i++){
+                                    double demoLat, demoLon, demoSpeed;
+                                    float demoPit;
+
+                                    demoLat = lat + new Random().nextDouble() / 100;
+                                    demoLon = lon + new Random().nextDouble() / 100;
+                                    demoSpeed = speed + new Random(i).nextDouble() * 30;
+                                    demoPit = new Random().nextInt(30);
+
+                                    mapHelper.addPoint(demoLat, demoLon, demoPit, demoSpeed, false);
+                                }
+                            }*/
 
                             mapHelper.addPoint(lat, lon, pit, speed, true);
                         } catch (NumberFormatException e) {

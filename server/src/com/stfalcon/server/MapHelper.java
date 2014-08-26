@@ -11,6 +11,7 @@ import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.*;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * Created by alexandr on 22.08.14.
@@ -26,10 +27,9 @@ public class MapHelper {
     public double green_pin = 13;
     public double yellow_pin = green_pin * 1.5;
 
-    public MapHelper(MyActivity activity){
-           this.activity = activity;
+    public MapHelper(MyActivity activity) {
+        this.activity = activity;
     }
-
 
 
     public void initilizeMap() {
@@ -55,7 +55,7 @@ public class MapHelper {
             }
         });
 
-        showValues((int)green_pin);
+        showValues((int) green_pin);
         seekBar = (SeekBar) activity.findViewById(R.id.seek_bar);
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -78,22 +78,22 @@ public class MapHelper {
     }
 
 
-    public void addPoint(double lat, double lon , float pit, double speed, boolean newPoint){
+    public void addPoint(double lat, double lon, float pit, double speed, boolean newPoint) {
 
-        if (!newPoint || needAddMarker(lat, lon)){
+        if (!newPoint || needAddMarker(lat, lon)) {
 
-            MarkerOptions options =  new MarkerOptions();
+            MarkerOptions options = new MarkerOptions();
             options.position(new LatLng(lat, lon));
 
-            if (pit < green_pin){
+            if (pit < green_pin) {
                 options.icon(BitmapDescriptorFactory.fromResource(R.drawable.green_pin));
             }
 
-            if (pit >= green_pin && pit <= yellow_pin){
+            if (pit >= green_pin && pit <= yellow_pin) {
                 options.icon(BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin));
             }
 
-            if (pit > yellow_pin){
+            if (pit > yellow_pin) {
                 options.icon(BitmapDescriptorFactory.fromResource(R.drawable.red_pin));
             }
 
@@ -101,11 +101,12 @@ public class MapHelper {
 
             Marker marker = googleMap.addMarker(options);
             markers.add(marker);
+
         }
     }
 
     private boolean needAddMarker(double lat, double lon) {
-        if (markers.isEmpty()){
+        if (markers.isEmpty()) {
             return true;
         } else {
 
@@ -124,12 +125,15 @@ public class MapHelper {
 
 
     private void repaintMarkers(){
+        int count = markers.size();
 
-        for (Marker marker : markers){
+        Marker marker;
+
+        for (int i = 0; i < count; i++){
+            marker = markers.get(i);
             try {
                 String[] arr = marker.getTitle().split(" ", 2);
                 float pit = Float.valueOf(arr[0]);
-
 
                 if (pit < green_pin){
                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.green_pin));
@@ -147,16 +151,21 @@ public class MapHelper {
                 e.printStackTrace();
             }
         }
-
     }
 
 
-    private void showValues(int green_pin){
+    private void showValues(int green_pin) {
         this.green_pin = green_pin;
         yellow_pin = green_pin * 1.5;
 
-        ((TextView)activity.findViewById(R.id.green)).setText("< " + green_pin);
-        ((TextView)activity.findViewById(R.id.yellow)).setText("> " + green_pin + " <" + yellow_pin);
-        ((TextView)activity.findViewById(R.id.red)).setText("> " + yellow_pin);
+        ((TextView) activity.findViewById(R.id.green)).setText("< " + green_pin);
+        ((TextView) activity.findViewById(R.id.yellow)).setText("> " + green_pin + " <" + yellow_pin);
+        ((TextView) activity.findViewById(R.id.red)).setText("> " + yellow_pin);
+    }
+
+    public void clearMarkers() {
+        googleMap.clear();
+
+        markers.clear();
     }
 }
