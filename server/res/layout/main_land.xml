@@ -122,6 +122,7 @@
     <SeekBar
             android:layout_width="300dp"
             android:layout_height="wrap_content"
+            android:paddingBottom="25dp"
             android:max="30"
             android:progress="13"
             android:id="@+id/seek_bar"

@@ -83,14 +83,14 @@ public class WriteService extends Service implements SensorEventListener {
 
         // Add the velocity change to the current velocity.
         velocity += deltaVelocity;
-
-
     }
 
     private void updateGUISpeed() {
 
         // Convert from meters per second to kilometers per hour.\
-        kmh = (Math.round(100*velocity / 1.6))/100;
+        kmh = (Math.round(100*velocity * 3.6))/1000;
+
+        Log.i("Loger",String.valueOf(kmh) + "KM");
 
         Intent intentTracking = new Intent(SampleApplication.CONNECTED);
         intentTracking.putExtra(SampleApplication.SPEED, String.valueOf(kmh));
@@ -123,14 +123,14 @@ public class WriteService extends Service implements SensorEventListener {
     }
 
     public void startListening() {
-       // calibration = Double.NaN;
+        //calibration = Double.NaN;
 
         Timer updateTimer = new Timer("velocityUpdate");
         updateTimer.scheduleAtFixedRate(new TimerTask() {
             public void run() {
                 updateGUISpeed();
             }
-        }, 0, 1000);
+        }, 0, 3000);
 
         activSensorType = SampleApplication.getInstance().getSendedType();
         startForeground(NOTIFICATION, makeNotification());
@@ -339,8 +339,7 @@ public class WriteService extends Service implements SensorEventListener {
             double y_ = sensorEvent.values[1];
             double z_ = sensorEvent.values[2];
 
-            double a = -1
-                    * Math.sqrt(Math.pow(x_, 2) + Math.pow(y_, 2)
+            double a = Math.sqrt(Math.pow(x_, 2) + Math.pow(y_, 2)
                     + Math.pow(z_, 2));
             currentAcceleration = (float)a;
             updateVelocity();
