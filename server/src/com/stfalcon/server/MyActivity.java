@@ -47,7 +47,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private View mapFragment;
 
     private int filterValuePerSecond = 15; //in seconds
-    private long lastUpdatedTime = System.currentTimeMillis(), updateInterval = 200;
 
     private RadioButton rbX, rbY, rbZ, rbSqrt;
     private RadioGroup radioGroup;
@@ -104,7 +103,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     }
 
     private void updateFilterValue() {
-        updateInterval = 1000 / filterValuePerSecond;
         tvFilterValue.setText(String.valueOf(filterValuePerSecond));
     }
 
@@ -295,12 +293,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     return;
                 }
 
-
-                if (lastUpdatedTime + updateInterval > System.currentTimeMillis()) {
-                    return;
-                } else {
-                    lastUpdatedTime = System.currentTimeMillis();
-                }
 
 
                 if (intent.hasExtra(SampleApplication.SENSOR)) {
