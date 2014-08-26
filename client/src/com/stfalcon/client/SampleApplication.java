@@ -13,6 +13,7 @@ public class SampleApplication extends Application {
     public static final String CONNECTED = "com.example.sasha.CONNECTED";
     public static final String DATA = "com.example.sasha.DATA";
     public static final String DEVICE = "device";
+    public static final String SPEED = "speed";
     public static final String WIFI = "wifi";
     public static final String STARTED = "started";
     public static final String SENSOR = "sensor";

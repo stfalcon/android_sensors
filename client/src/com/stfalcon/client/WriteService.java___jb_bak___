@@ -66,30 +66,7 @@ public class WriteService extends Service implements SensorEventListener {
     float currentAcceleration = 0;
     float velocity = 0;
     Date lastUpdate;
-    double calibration;
 
-
-    private void updateVelocity() {
-        // Calculate how long this acceleration has been applied.
-        Date timeNow = new Date(System.currentTimeMillis());
-        long timeDelta = timeNow.getTime()-lastUpdate.getTime();
-        lastUpdate.setTime(timeNow.getTime());
-
-        // Calculate the change in velocity at the
-        // current acceleration since the last update.
-        float deltaVelocity = appliedAcceleration * (timeDelta/1000);
-        appliedAcceleration = currentAcceleration;
-
-        // Add the velocity change to the current velocity.
-        velocity += deltaVelocity;
-
-
-        final double mph = (Math.round(100*velocity / 1.6 * 3.6))/100;
-
-        Intent intentTracking = new Intent(SampleApplication.CONNECTED);
-        intentTracking.putExtra(SampleApplication.SPEED, String.valueOf(mph));
-        LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
-    }
 
 
 
@@ -97,8 +74,6 @@ public class WriteService extends Service implements SensorEventListener {
     public void onCreate() {
         super.onCreate();
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-
-        lastUpdate = new Date(System.currentTimeMillis());
 
         SampleApplication.getInstance().createConnectionWrapper(
                 new ConnectionWrapper.OnCreatedListener() {
@@ -117,7 +92,7 @@ public class WriteService extends Service implements SensorEventListener {
     }
 
     public void startListening() {
-        calibration = Double.NaN;
+        //startService(new Intent(this, WriteService.class));
         activSensorType = SampleApplication.getInstance().getSendedType();
         startForeground(NOTIFICATION, makeNotification());
         Log.v("Loger", "START_DONE");
@@ -314,22 +289,6 @@ public class WriteService extends Service implements SensorEventListener {
     public void onSensorChanged(SensorEvent sensorEvent) {
         if (lastSendingTime == 0)
             lastSendingTime = System.currentTimeMillis();
-
-        //speedometer
-        double x_ = sensorEvent.values[0];
-        double y_ = sensorEvent.values[1];
-        double z_ = sensorEvent.values[2];
-
-        double a = Math.sqrt(Math.pow(x_, 2) + Math.pow(y_, 2) + Math.pow(z_, 2));
-
-        if (calibration == Double.NaN)
-            calibration = a;
-        else {
-            updateVelocity();
-            currentAcceleration = (float)a;
-        }
-
-
 
         long time = System.currentTimeMillis() - lastSendingTime;
 
