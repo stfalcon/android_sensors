@@ -60,6 +60,26 @@
             android:layout_marginLeft="10dp"
             android:text="Pause"/>
 
+    <SeekBar
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:id="@+id/seek_bar_frequency"
+            android:layout_toRightOf="@+id/pause"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="5dp"
+            android:max="150"
+            android:progress="50"
+            android:visibility="gone"/>
+
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/tv_frequency"
+            android:layout_toRightOf="@+id/seek_bar_frequency"
+            android:layout_marginLeft="10dp"
+            android:layout_marginTop="10dp"
+            android:visibility="gone"/>
+
     <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -94,6 +114,12 @@
                 android:text="Sqrt"
                 android:checked="true"
                 android:id="@+id/rb_sqrt"/>
+        <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LFF"
+                android:checked="false"
+                android:id="@+id/rb_lff"/>
     </RadioGroup>
     <Button
             android:layout_width="wrap_content"
