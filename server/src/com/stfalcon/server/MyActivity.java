@@ -460,6 +460,11 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         renderer.setAxesColor(Color.DKGRAY);
         renderer.setLabelsColor(Color.LTGRAY);
 
+        renderer.setShowGridX(true);
+        renderer.addYTextLabel(mapHelper.green_pin, "green");
+        renderer.addYTextLabel(mapHelper.yellow_pin, "yellow");
+        renderer.setYLabelsColor(0,Color.GREEN);
+
         return renderer;
     }
 
