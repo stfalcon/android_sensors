@@ -40,7 +40,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private boolean bound = false;
     private Intent intentService;
     private BroadcastReceiver mReceiver;
-    private TextView textView, tvFilterValue;
+    private TextView textView, tvFilterValue, tvFrequency;
     private LinearLayout llChart;
     private boolean pause = false;
     private MapHelper mapHelper;
@@ -48,8 +48,10 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
     private int filterValuePerSecond = 15; //in seconds
 
-    private RadioButton rbX, rbY, rbZ, rbSqrt;
+    private RadioButton rbX, rbY, rbZ, rbSqrt, rbLFF;
     private RadioGroup radioGroup;
+    private SeekBar seekBarFrequency;
+    private float frequency;
 
     ArrayList<DeviceGraphInformation> devices = new ArrayList<DeviceGraphInformation>();
     private GraphicalView graphicalView;
@@ -74,6 +76,29 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         mapFragment.setVisibility(View.GONE);
         server.setOnClickListener(this);
         showMap.setOnClickListener(this);
+
+        tvFrequency = (TextView) findViewById(R.id.tv_frequency);
+
+        seekBarFrequency = (SeekBar) findViewById(R.id.seek_bar_frequency);
+        seekBarFrequency.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                frequency = progress;
+                tvFrequency.setText(String.valueOf(frequency));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+        frequency = seekBarFrequency.getProgress();
+        tvFrequency.setText(String.valueOf(frequency));
 
         intentService = new Intent(this, WriteService.class);
 
@@ -177,11 +202,13 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                 rbY = (RadioButton) findViewById(R.id.rb_y);
                 rbZ = (RadioButton) findViewById(R.id.rb_z);
                 rbSqrt = (RadioButton) findViewById(R.id.rb_sqrt);
+                rbLFF = (RadioButton) findViewById(R.id.rb_lff);
 
                 rbX.setOnCheckedChangeListener(this);
                 rbY.setOnCheckedChangeListener(this);
                 rbZ.setOnCheckedChangeListener(this);
                 rbSqrt.setOnCheckedChangeListener(this);
+                rbLFF.setOnCheckedChangeListener(this);
             }
         }
     }
@@ -341,6 +368,26 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         float z = Float.valueOf(arr[3]);
                         float sqr = (float) Math.sqrt(x * x + y * y + z * z);
 
+                        long graphTime = sendingTime + readDataTime;
+
+                        //TODO:
+                        float lff;
+
+                        if (information.lffSeries.getItemCount() != 0) {
+                            float lastLFF = (float) information.lffSeries.getY(information.lffSeries.getItemCount() - 1);
+                            long lastLFFTime = (long) information.lffSeries.getMaxX();
+                            double green = mapHelper.green_pin * frequency / 100;
+
+                            if (graphTime - lastLFFTime > frequency
+                                    && Math.abs(sqr - lastLFF) > green){
+                                lff = sqr;
+                            } else {
+                                lff = lastLFF;
+                            }
+                        } else {
+                            lff = sqr;
+                        }
+
                         try {
                             double lat, lon, speed;
                             lat = Double.valueOf(arr[4]);
@@ -358,6 +405,9 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                                     break;
                                 case R.id.rb_z:
                                     pit = z;
+                                    break;
+                                case R.id.rb_lff:
+                                    pit = lff;
                                     break;
                                 case R.id.rb_sqrt:
                                 default:
@@ -385,20 +435,22 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                             e.printStackTrace();
                         }
 
-                        long graphTime = sendingTime + readDataTime;
-
                         if (information.xSeries.getMaxX() + 1000 < graphTime) {
 
                             information.xSeries.add(currentTime - 500, MathHelper.NULL_VALUE);
                             information.ySeries.add(currentTime - 500, MathHelper.NULL_VALUE);
                             information.zSeries.add(currentTime - 500, MathHelper.NULL_VALUE);
                             information.sqrSeries.add(currentTime - 500, MathHelper.NULL_VALUE);
+                            information.lffSeries.add(currentTime - 500, MathHelper.NULL_VALUE);
                         }
 
                         information.xSeries.add(graphTime, x);
                         information.ySeries.add(graphTime, y);
                         information.zSeries.add(graphTime, z);
                         information.sqrSeries.add(graphTime, sqr);
+
+                        //TODO:
+                        information.lffSeries.add(graphTime, lff);
 
                     }
 
@@ -480,6 +532,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             createAndAddYSeriesAndRenderer(information);
             createAndAddZSeriesAndRenderer(information);
             createAndAddSqrSeriesAndRenderer(information);
+            createAndAddLFFSeriesAndRenderer(information);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -557,6 +610,24 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         }
     }
 
+    private void createAndAddLFFSeriesAndRenderer(DeviceGraphInformation information) {
+        XYSeriesRenderer r = new XYSeriesRenderer();
+        r.setColor(getRandomColor());
+        r.setPointStyle(PointStyle.POINT);
+        r.setFillPoints(true);
+        r.setLineWidth(3f);
+
+        information.lffSeriesRenderer = r;
+
+        XYValueSeries lffSeries = new XYValueSeries(information.device + "-LFF");
+        information.lffSeries = lffSeries;
+
+        if (rbX.isChecked()) {
+            renderer.addSeriesRenderer(information.lffSeriesRenderer);
+            dataSet.addSeries(devices.size(), lffSeries);
+        }
+    }
+
     public int getRandomColor() {
         Random rand = new Random();
         // Java 'Color' class takes 3 floats, from 0 to 1.
@@ -585,6 +656,19 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     series = information.zSeries;
                     seriesRenderer = information.zSeriesRenderer;
                     break;
+                case R.id.rb_lff:
+                    if (isChecked) {
+                        seekBarFrequency.setVisibility(View.VISIBLE);
+                        tvFrequency.setVisibility(View.VISIBLE);
+                    }
+                    else {
+                        seekBarFrequency.setVisibility(View.GONE);
+                        tvFrequency.setVisibility(View.GONE);
+                    }
+
+                    series = information.lffSeries;
+                    seriesRenderer = information.lffSeriesRenderer;
+                    break;
                 case R.id.rb_sqrt:
                 default:
                     series = information.sqrSeries;
@@ -611,34 +695,16 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         private XYValueSeries ySeries;
         private XYValueSeries zSeries;
         private XYValueSeries sqrSeries;
+        private XYValueSeries lffSeries;
 
         private org.achartengine.renderer.XYSeriesRenderer xSeriesRenderer;
         private org.achartengine.renderer.XYSeriesRenderer ySeriesRenderer;
         private org.achartengine.renderer.XYSeriesRenderer zSeriesRenderer;
         private org.achartengine.renderer.XYSeriesRenderer sqrSeriesRenderer;
+        private org.achartengine.renderer.XYSeriesRenderer lffSeriesRenderer;
 
         public DeviceGraphInformation(String device) {
             this.device = device;
-        }
-
-        public String getDevice() {
-            return device;
-        }
-
-        public XYValueSeries getxSeries() {
-            return xSeries;
-        }
-
-        public XYValueSeries getySeries() {
-            return ySeries;
-        }
-
-        public XYValueSeries getzSeries() {
-            return zSeries;
-        }
-
-        public XYValueSeries getSqrSeries() {
-            return sqrSeries;
         }
 
         @Override
