@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent">
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:id="@+id/main">
 
     <LinearLayout
             android:layout_width="match_parent"
@@ -17,25 +18,26 @@
             android:orientation="horizontal"
             android:layout_centerHorizontal="true"
             android:layout_alignParentBottom="true">
+
         <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/minus"
                 android:text="-"/>
+
         <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/filter_value"
                 android:layout_marginLeft="5dp"
                 android:layout_marginRight="5dp"/>
+
         <Button
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:id="@+id/plus"
                 android:text="+"/>
     </LinearLayout>
-
-
 
 
     <Button
@@ -93,27 +95,32 @@
             android:orientation="horizontal"
             android:layout_alignParentRight="true"
             android:layout_alignParentTop="true">
+
         <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="X"
                 android:id="@+id/rb_x"/>
+
         <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Y"
                 android:id="@+id/rb_y"/>
+
         <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Z"
                 android:id="@+id/rb_z"/>
+
         <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Sqrt"
                 android:checked="true"
                 android:id="@+id/rb_sqrt"/>
+
         <RadioButton
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -121,13 +128,6 @@
                 android:checked="false"
                 android:id="@+id/rb_lff"/>
     </RadioGroup>
-    <Button
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Screen Shot"
-            android:id="@+id/screen_shot"
-            android:layout_alignParentBottom="true"
-            android:layout_alignParentLeft="true"/>
 
 
     <fragment
@@ -137,12 +137,21 @@
             android:layout_height="match_parent"
             android:visibility="gone"/>
 
-     <Button
-             android:layout_width="wrap_content"
-             android:layout_height="wrap_content"
-             android:id="@+id/show_map"
-             android:layout_centerVertical="true"
-             android:text="Show Map"/>
+
+    <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Screen Shot"
+            android:id="@+id/screen_shot"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="true"/>
+
+    <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/show_map"
+            android:layout_centerVertical="true"
+            android:text="Show Map"/>
 
 
     <SeekBar

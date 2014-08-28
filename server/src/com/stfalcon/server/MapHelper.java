@@ -1,5 +1,7 @@
 package com.stfalcon.server;
 
+import android.graphics.Bitmap;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.SeekBar;
 import android.widget.TextView;
@@ -10,6 +12,11 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.*;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -161,6 +168,7 @@ public class MapHelper {
         ((TextView) activity.findViewById(R.id.green)).setText("< " + green_pin);
         ((TextView) activity.findViewById(R.id.yellow)).setText("> " + green_pin + " <" + yellow_pin);
         ((TextView) activity.findViewById(R.id.red)).setText("> " + yellow_pin);
+
     }
 
     public void clearMarkers() {
@@ -168,4 +176,43 @@ public class MapHelper {
 
         markers.clear();
     }
+
+
+
+
+    public void snapshotMap() {
+        GoogleMap.SnapshotReadyCallback callback = new GoogleMap.SnapshotReadyCallback() {
+            Bitmap bitmap;
+
+            @Override
+            public void onSnapshotReady(Bitmap snapshot) {
+                // TODO Auto-generated method stub
+                bitmap = snapshot;
+                try {
+                    File directory = new File("/sdcard/AccelData/ScreenShots/");
+                    directory.mkdirs();
+
+                    SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                    String time = simpleDateFormat.format(System.currentTimeMillis());
+
+                    File jpegPictureFile = new File("/sdcard/AccelData/ScreenShots/" + time + "_graph.jpeg");
+                    jpegPictureFile.createNewFile();
+                    FileOutputStream pictureOutputStream = new FileOutputStream(jpegPictureFile);
+
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, pictureOutputStream);
+
+                    MediaStore.Images.Media.insertImage(activity.getContentResolver(), jpegPictureFile.getPath(), null
+                            , "Graph Screen Shot");
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        googleMap.snapshot(callback);
+
+    }
+
 }

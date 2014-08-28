@@ -280,7 +280,14 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     }
 
     private void makeScreenShot() {
-        Bitmap bitmap = graphicalView.toBitmap();
+        Bitmap bitmap;
+        if (mapFragment.getVisibility() == View.VISIBLE) {
+            mapHelper.snapshotMap();
+            return;
+        } else {
+            bitmap = graphicalView.toBitmap();
+        }
+
 
         try {
             File directory = new File("/sdcard/AccelData/ScreenShots/");
@@ -319,7 +326,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     startActivity(new Intent(Settings.ACTION_WIFI_SETTINGS));
                     return;
                 }
-
 
 
                 if (intent.hasExtra(SampleApplication.SENSOR)) {
@@ -379,7 +385,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                             double green = mapHelper.green_pin * frequency / 100;
 
                             if (graphTime - lastLFFTime > frequency
-                                    && Math.abs(sqr - lastLFF) > green){
+                                    && Math.abs(sqr - lastLFF) > green) {
                                 lff = sqr;
                             } else {
                                 lff = lastLFF;
@@ -396,7 +402,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                             float pit;
 
-                            switch (radioGroup.getCheckedRadioButtonId()){
+                            switch (radioGroup.getCheckedRadioButtonId()) {
                                 case R.id.rb_x:
                                     pit = x;
                                     break;
@@ -515,7 +521,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         renderer.setShowGridX(true);
         renderer.addYTextLabel(mapHelper.green_pin, "green");
         renderer.addYTextLabel(mapHelper.yellow_pin, "yellow");
-        renderer.setYLabelsColor(0,Color.GREEN);
+        renderer.setYLabelsColor(0, Color.GREEN);
 
         return renderer;
     }
@@ -660,8 +666,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     if (isChecked) {
                         seekBarFrequency.setVisibility(View.VISIBLE);
                         tvFrequency.setVisibility(View.VISIBLE);
-                    }
-                    else {
+                    } else {
                         seekBarFrequency.setVisibility(View.GONE);
                         tvFrequency.setVisibility(View.GONE);
                     }
@@ -715,4 +720,5 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                 return false;
         }
     }
+
 }
