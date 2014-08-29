@@ -34,7 +34,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private final static int MIN_VALUES_COUNT_PER_SECOND = 5;
     private final static int MAX_VALUES_COUNT_PER_SECOND = 30;
     private final static int MILLISECONDS_BEFORE_REFRESH_GRAPHS = 30;
-    private Button server, showMap;
+    private Button server, showMap, showConsole;
     private ServiceConnection sConn;
     private WriteService writeServise;
     private boolean bound = false;
@@ -44,9 +44,13 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private LinearLayout llChart;
     private boolean pause = false;
     private MapHelper mapHelper;
-    private View mapFragment;
+    public View mapFragment;
+    public TextView tvSpeed;
+    public RelativeLayout rlSpeed;
+    private LinearLayout llConsole;
+    private TextView tvConsole;
 
-    private int filterValuePerSecond = 15; //in seconds
+    private int filterValuePerSecond = 15, counter = 0; //in seconds
 
     private RadioButton rbX, rbY, rbZ, rbSqrt, rbLFF;
     private RadioGroup radioGroup;
@@ -70,14 +74,28 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
         server = (Button) findViewById(R.id.server);
         showMap = (Button) findViewById(R.id.show_map);
+        showConsole = (Button) findViewById(R.id.show_console);
         textView = (TextView) findViewById(R.id.text);
         llChart = (LinearLayout) findViewById(R.id.chart);
         mapFragment = (View) findViewById(R.id.map);
         mapFragment.setVisibility(View.GONE);
+        tvSpeed = (TextView) findViewById(R.id.speed);
+        rlSpeed = (RelativeLayout) findViewById(R.id.rl_speed);
+        llConsole = (LinearLayout) findViewById(R.id.ll_console);
+        tvConsole = (TextView) findViewById(R.id.tv_console);
+
         server.setOnClickListener(this);
         showMap.setOnClickListener(this);
+        showConsole.setOnClickListener(this);
+        findViewById(R.id.clear).setOnClickListener(this);
+        findViewById(R.id.pause).setOnClickListener(this);
+        findViewById(R.id.plus).setOnClickListener(this);
+        findViewById(R.id.minus).setOnClickListener(this);
+        findViewById(R.id.screen_shot).setOnClickListener(this);
+        findViewById(R.id.show_console).setOnClickListener(this);
 
         tvFrequency = (TextView) findViewById(R.id.tv_frequency);
+        tvFilterValue = (TextView) findViewById(R.id.filter_value);
 
         seekBarFrequency = (SeekBar) findViewById(R.id.seek_bar_frequency);
         seekBarFrequency.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
@@ -116,13 +134,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             }
         };
 
-        findViewById(R.id.clear).setOnClickListener(this);
-        findViewById(R.id.pause).setOnClickListener(this);
-        findViewById(R.id.plus).setOnClickListener(this);
-        findViewById(R.id.minus).setOnClickListener(this);
-        findViewById(R.id.screen_shot).setOnClickListener(this);
-
-        tvFilterValue = (TextView) findViewById(R.id.filter_value);
 
         updateFilterValue();
     }
@@ -227,18 +238,9 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                 case R.id.show_map:
                     if (mapFragment.getVisibility() == View.VISIBLE) {
                         mapFragment.setVisibility(View.GONE);
-                        findViewById(R.id.seek_bar).setVisibility(View.GONE);
-                        findViewById(R.id.green).setVisibility(View.GONE);
-                        findViewById(R.id.yellow).setVisibility(View.GONE);
-                        findViewById(R.id.red).setVisibility(View.GONE);
-
                         showMap.setText("Show Map");
                     } else {
                         mapFragment.setVisibility(View.VISIBLE);
-                        findViewById(R.id.seek_bar).setVisibility(View.VISIBLE);
-                        findViewById(R.id.green).setVisibility(View.VISIBLE);
-                        findViewById(R.id.yellow).setVisibility(View.VISIBLE);
-                        findViewById(R.id.red).setVisibility(View.VISIBLE);
                         showMap.setText("Hide Map");
                     }
                     break;
@@ -274,6 +276,16 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                 case R.id.screen_shot:
                     makeScreenShot();
+                    break;
+
+                case R.id.show_console:
+                    if (llConsole.getVisibility() == View.VISIBLE) {
+                        llConsole.setVisibility(View.GONE);
+                        showConsole.setText("Show Console");
+                    } else {
+                        llConsole.setVisibility(View.VISIBLE);
+                        showConsole.setText("Hide Console");
+                    }
                     break;
             }
         }
@@ -356,7 +368,10 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         return;
                     }
 
-                    String[] datas = intent.getStringExtra(SampleApplication.SENSOR).split("\n");
+
+                    String allData = intent.getStringExtra(SampleApplication.SENSOR);
+                    tvConsole.setText(allData);
+                    String[] datas = allData.split("\n");
 
 
                     long sendingTime;
@@ -422,6 +437,10 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                             }
 
+                            validatePit(pit);
+
+                            mapHelper.addPoint(lat, lon, pit, speed, true);
+
                             /*if (information.xSeries.getItemCount() == 0){
                                 for (int i = 0; i < 1000; i++){
                                     double demoLat, demoLon, demoSpeed;
@@ -436,7 +455,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                                 }
                             }*/
 
-                            mapHelper.addPoint(lat, lon, pit, speed, true);
                         } catch (NumberFormatException e) {
                             e.printStackTrace();
                         }
@@ -490,6 +508,31 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, intentFilter);
     }
 
+
+    private void validatePit(float pit) {
+
+        if (counter >= 1 && pit <= mapHelper.yellow_pin) {
+            counter--;
+            return;
+        }
+
+        if (pit < mapHelper.green_pin) {
+            rlSpeed.setBackgroundResource(R.drawable.circle_green);
+            counter = 1;
+        }
+
+        if (pit >= mapHelper.green_pin && pit <= mapHelper.yellow_pin) {
+            rlSpeed.setBackgroundResource(R.drawable.circle_yellow);
+            counter = 15;
+        }
+
+        if (pit > mapHelper.yellow_pin) {
+            rlSpeed.setBackgroundResource(R.drawable.circle_red);
+            counter = 15;
+        }
+    }
+
+
     private DeviceGraphInformation findDeviceOnGraph(String device) {
         for (DeviceGraphInformation information : devices)
             if (information.device.equals(device))
@@ -508,7 +551,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         renderer.setPointSize(2f);
         renderer.setMargins(new int[]{20, 30, 15, 0});
 
-        renderer.setZoomButtonsVisible(true);
+        renderer.setZoomButtonsVisible(false);
         renderer.setAntialiasing(true);
 
         renderer.setXAxisMin(0);
@@ -516,11 +559,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         renderer.setYAxisMax(20);
 
         renderer.setAxesColor(Color.DKGRAY);
-        renderer.setLabelsColor(Color.LTGRAY);
-
-        renderer.setShowGridX(true);
-        renderer.addYTextLabel(mapHelper.green_pin, "green");
-        renderer.addYTextLabel(mapHelper.yellow_pin, "yellow");
+        renderer.setLabelsColor(Color.BLACK);
         renderer.setYLabelsColor(0, Color.GREEN);
 
         return renderer;
