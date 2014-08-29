@@ -49,26 +49,36 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     public RelativeLayout rlSpeed;
     private LinearLayout llConsole;
     private TextView tvConsole;
+    private View mDecorView;
 
     private int filterValuePerSecond = 15, counter = 0; //in seconds
 
-    private RadioButton rbX, rbY, rbZ, rbSqrt, rbLFF;
+    private CheckBox rbX, rbY, rbZ, rbSqrt, rbLFF, cbAuto;
     private RadioGroup radioGroup;
-    private SeekBar seekBarFrequency;
+    private SeekBar seekBarFrequency, seekBarSensativity;
     private float frequency;
+    private float speed = 0f;
 
     ArrayList<DeviceGraphInformation> devices = new ArrayList<DeviceGraphInformation>();
     private GraphicalView graphicalView;
     private XYMultipleSeriesDataset dataSet = new XYMultipleSeriesDataset();
     private XYMultipleSeriesRenderer renderer = new XYMultipleSeriesRenderer();
 
+
+
+
     /**
+     *
      * Called when the activity is first created.
      */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        //full screen
+        getActionBar().hide();
+
         setContentBasedOnLayout();
+        mDecorView = getWindow().getDecorView();
 
         mapHelper = new MapHelper(this);
 
@@ -83,6 +93,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         rlSpeed = (RelativeLayout) findViewById(R.id.rl_speed);
         llConsole = (LinearLayout) findViewById(R.id.ll_console);
         tvConsole = (TextView) findViewById(R.id.tv_console);
+        cbAuto = (CheckBox) findViewById(R.id.cb_auto);
+        seekBarSensativity = (SeekBar) findViewById(R.id.seek_bar);
 
         server.setOnClickListener(this);
         showMap.setOnClickListener(this);
@@ -133,14 +145,36 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                 bound = false;
             }
         };
-
-
         updateFilterValue();
+    }
+
+
+
+
+
+
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if(android.os.Build.VERSION.SDK_INT >= 19) {
+            if (hasFocus) {
+                mDecorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+            }
+        }
     }
 
     private void updateFilterValue() {
         tvFilterValue.setText(String.valueOf(filterValuePerSecond));
     }
+
+
+
 
 
     @Override
@@ -150,6 +184,10 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         bindService(intentService, sConn, BIND_AUTO_CREATE);
     }
 
+
+
+
+
     @Override
     public void onStop() {
         super.onStop();
@@ -158,6 +196,9 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         unbindService(sConn);
         bound = false;
     }
+
+
+
 
     @Override
     protected void onPause() {
@@ -209,11 +250,11 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                 radioGroup = (RadioGroup) findViewById(R.id.radio_group);
 
-                rbX = (RadioButton) findViewById(R.id.rb_x);
-                rbY = (RadioButton) findViewById(R.id.rb_y);
-                rbZ = (RadioButton) findViewById(R.id.rb_z);
-                rbSqrt = (RadioButton) findViewById(R.id.rb_sqrt);
-                rbLFF = (RadioButton) findViewById(R.id.rb_lff);
+                rbX = (CheckBox) findViewById(R.id.rb_x);
+                rbY = (CheckBox) findViewById(R.id.rb_y);
+                rbZ = (CheckBox) findViewById(R.id.rb_z);
+                rbSqrt = (CheckBox) findViewById(R.id.rb_sqrt);
+                rbLFF = (CheckBox) findViewById(R.id.rb_lff);
 
                 rbX.setOnCheckedChangeListener(this);
                 rbY.setOnCheckedChangeListener(this);
@@ -391,6 +432,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                         long graphTime = sendingTime + readDataTime;
 
+                        showSpeed(arr[6]);
+
                         //TODO:
                         float lff;
 
@@ -506,6 +549,14 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             }
         };
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, intentFilter);
+    }
+
+    private void showSpeed(String speed) {
+        tvSpeed.setText(speed.substring(0,speed.indexOf(".") + 2));
+        this.speed = Float.valueOf(speed);
+        if (cbAuto.isChecked() && this.speed > 1){
+            seekBarSensativity.setProgress((int)(mapHelper.green_pin - (mapHelper.green_pin/this.speed)));
+        }
     }
 
 
@@ -715,8 +766,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     break;
                 case R.id.rb_sqrt:
                 default:
-                    series = information.sqrSeries;
-                    seriesRenderer = information.sqrSeriesRenderer;
+                    series = information.lffSeries;
+                    seriesRenderer = information.lffSeriesRenderer;
                     break;
             }
 

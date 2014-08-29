@@ -17,7 +17,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerInParent="true"
-                android:textSize="62sp"
+                android:textSize="56sp"
                 android:text="0"
                 android:id="@+id/speed"/>
 
@@ -125,36 +125,36 @@
             android:layout_alignParentRight="true"
             android:layout_alignParentTop="true">
 
-        <RadioButton
+        <CheckBox
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="X"
                 android:id="@+id/rb_x"/>
 
-        <RadioButton
+        <CheckBox
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Y"
                 android:id="@+id/rb_y"/>
 
-        <RadioButton
+        <CheckBox
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Z"
                 android:id="@+id/rb_z"/>
 
-        <RadioButton
+        <CheckBox
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Sqrt"
-                android:checked="true"
+                android:checked="false"
                 android:id="@+id/rb_sqrt"/>
 
-        <RadioButton
+        <CheckBox
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="LFF"
-                android:checked="false"
+                android:checked="true"
                 android:id="@+id/rb_lff"/>
     </RadioGroup>
 

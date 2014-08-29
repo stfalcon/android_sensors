@@ -365,7 +365,7 @@ public class WriteService extends Service implements SensorEventListener {
 
         public void onLocationChanged(final Location loc) {
             Log.i("Loger", "Location changed");
-            isBetterLocation(loc, previousBestLocation);
+            if (isBetterLocation(loc, previousBestLocation)) previousBestLocation = loc;
         }
 
         public void onProviderDisabled(String provider) {
@@ -388,10 +388,10 @@ public class WriteService extends Service implements SensorEventListener {
      * @return
      */
     protected boolean isBetterLocation(Location location, Location currentBestLocation) {
-        if (currentBestLocation == null) {
+        /*if (currentBestLocation == null) {
             previousBestLocation = location;
             return true;
-        }
+        }*/
 
         // Check whether the new location fix is newer or older
         long timeDelta = location.getTime() - currentBestLocation.getTime();
