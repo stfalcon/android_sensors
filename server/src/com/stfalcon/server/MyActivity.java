@@ -11,7 +11,6 @@ import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.*;
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
@@ -34,10 +33,11 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private final static int MIN_VALUES_COUNT_PER_SECOND = 5;
     private final static int MAX_VALUES_COUNT_PER_SECOND = 30;
     private final static int MILLISECONDS_BEFORE_REFRESH_GRAPHS = 30;
-    private Button server, showMap, showConsole;
+    public final static int MIN_DELTA_SPEED = 5;
+    private Button server, showMap, showConsole, writeToFile;
     private ServiceConnection sConn;
     private WriteService writeServise;
-    private boolean bound = false;
+    private boolean bound = false, write = false;
     private Intent intentService;
     private BroadcastReceiver mReceiver;
     private TextView textView, tvFilterValue, tvFrequency;
@@ -50,6 +50,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private LinearLayout llConsole;
     private TextView tvConsole;
     private View mDecorView;
+    private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private ArrayList<String> devicesList = new ArrayList<String>();
 
     private int filterValuePerSecond = 15, counter = 0; //in seconds
 
@@ -68,7 +70,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
 
     /**
-     *
      * Called when the activity is first created.
      */
     @Override
@@ -77,7 +78,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         //full screen
         getActionBar().hide();
 
-        setContentBasedOnLayout();
+        setContentView(R.layout.main_land);
         mDecorView = getWindow().getDecorView();
 
         mapHelper = new MapHelper(this);
@@ -85,6 +86,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         server = (Button) findViewById(R.id.server);
         showMap = (Button) findViewById(R.id.show_map);
         showConsole = (Button) findViewById(R.id.show_console);
+        writeToFile = (Button) findViewById(R.id.write);
         textView = (TextView) findViewById(R.id.text);
         llChart = (LinearLayout) findViewById(R.id.chart);
         mapFragment = (View) findViewById(R.id.map);
@@ -99,12 +101,31 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         server.setOnClickListener(this);
         showMap.setOnClickListener(this);
         showConsole.setOnClickListener(this);
+        writeToFile.setOnClickListener(this);
         findViewById(R.id.clear).setOnClickListener(this);
         findViewById(R.id.pause).setOnClickListener(this);
         findViewById(R.id.plus).setOnClickListener(this);
         findViewById(R.id.minus).setOnClickListener(this);
         findViewById(R.id.screen_shot).setOnClickListener(this);
         findViewById(R.id.show_console).setOnClickListener(this);
+
+
+        radioGroup = (RadioGroup) findViewById(R.id.radio_group);
+
+        rbX = (CheckBox) findViewById(R.id.rb_x);
+        rbY = (CheckBox) findViewById(R.id.rb_y);
+        rbZ = (CheckBox) findViewById(R.id.rb_z);
+        rbSqrt = (CheckBox) findViewById(R.id.rb_sqrt);
+        rbLFF = (CheckBox) findViewById(R.id.rb_lff);
+
+        rbX.setOnCheckedChangeListener(this);
+        rbY.setOnCheckedChangeListener(this);
+        rbZ.setOnCheckedChangeListener(this);
+        rbSqrt.setOnCheckedChangeListener(this);
+        rbLFF.setOnCheckedChangeListener(this);
+
+        rbLFF.performClick();
+
 
         tvFrequency = (TextView) findViewById(R.id.tv_frequency);
         tvFilterValue = (TextView) findViewById(R.id.filter_value);
@@ -152,12 +173,10 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
 
 
-
-
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if(android.os.Build.VERSION.SDK_INT >= 19) {
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
             if (hasFocus) {
                 mDecorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
@@ -169,10 +188,11 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         }
     }
 
+
+
     private void updateFilterValue() {
         tvFilterValue.setText(String.valueOf(filterValuePerSecond));
     }
-
 
 
 
@@ -183,7 +203,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         registerReceiver();
         bindService(intentService, sConn, BIND_AUTO_CREATE);
     }
-
 
 
 
@@ -206,6 +225,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
     }
 
+
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -226,6 +247,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         }
     }
 
+
+
     private void clearGraph() {
         if (graphicalView.isChartDrawn()) {
             renderer.removeAllRenderers();
@@ -235,35 +258,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         }
     }
 
-    private void setContentBasedOnLayout() {
-        WindowManager winMan = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
 
-        if (winMan != null) {
-            int orientation = winMan.getDefaultDisplay().getOrientation();
-
-            if (orientation == 0) {
-                // Portrait
-                setContentView(R.layout.main_land);
-            } else if (orientation == 1) {
-                // Landscape
-                setContentView(R.layout.main_land);
-
-                radioGroup = (RadioGroup) findViewById(R.id.radio_group);
-
-                rbX = (CheckBox) findViewById(R.id.rb_x);
-                rbY = (CheckBox) findViewById(R.id.rb_y);
-                rbZ = (CheckBox) findViewById(R.id.rb_z);
-                rbSqrt = (CheckBox) findViewById(R.id.rb_sqrt);
-                rbLFF = (CheckBox) findViewById(R.id.rb_lff);
-
-                rbX.setOnCheckedChangeListener(this);
-                rbY.setOnCheckedChangeListener(this);
-                rbZ.setOnCheckedChangeListener(this);
-                rbSqrt.setOnCheckedChangeListener(this);
-                rbLFF.setOnCheckedChangeListener(this);
-            }
-        }
-    }
 
 
     @Override
@@ -272,7 +267,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             switch (view.getId()) {
 
                 case R.id.server:
-                    //startActivity(new Intent(this, ConnectActivity.class));
                     writeServise.startServer();
                     break;
 
@@ -328,9 +322,33 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         showConsole.setText("Hide Console");
                     }
                     break;
+
+                case R.id.write:
+                    if (!write) {
+                        writeToFile.setText("Stop write");
+                        write = true;
+                        if (write && bound) {
+                            for (String device : devicesList) {
+                                writeServise.createFileToWrite(device);
+                                String dataToWrite = "time" + "\t\t\t\t\t\t\t\t\t\t\t" + "x" + "\t\t\t\t\t" + "y" + "\t\t\t\t" + "z" + "\t\t\t\t" + "sqr" +
+                                        "\t\t\t\t\t\t\t" + "lat" + "\t\t\t\t\t\t" + "lon" + "\t\t\t\t\t" + "speed" + "\n";
+                                writeServise.writeToFile(device, dataToWrite);
+                            }
+                        }
+                    } else {
+                        writeToFile.setText("Write to file");
+                        write = false;
+                        if (bound) {
+                            writeServise.stopWriteToFile();
+                        }
+                    }
+                    break;
             }
         }
     }
+
+
+
 
     private void makeScreenShot() {
         Bitmap bitmap;
@@ -365,6 +383,9 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     }
 
 
+
+
+
     /**
      * Create receiver for cache data from services
      */
@@ -382,9 +403,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
 
                 if (intent.hasExtra(SampleApplication.SENSOR)) {
-                    /*String s = textView.getText().toString();
-                    s = s + intent.getStringExtra(SampleApplication.SENSOR);
-                    textView.setText(s);*/
 
                     String device = intent.getStringExtra(SampleApplication.DEVICE);
 
@@ -396,6 +414,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         createSeriesAndRendersForNewDevice(information);
 
                         devices.add(information);
+                        devicesList.add(getModel(device));
                     }
 
                     long currentTime = System.currentTimeMillis();
@@ -432,7 +451,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                         long graphTime = sendingTime + readDataTime;
 
-                        showSpeed(arr[6]);
+                        showSpeed(getModel(device), arr[6]);
 
                         //TODO:
                         float lff;
@@ -481,6 +500,14 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                             }
 
                             validatePit(pit);
+
+                            if (write && bound) {
+
+                                String time = simpleDateFormat.format(System.currentTimeMillis());
+                                String dataToWrite = time + "\t\t\t" + x + "\t\t\t" + y + "\t\t\t" + z + "\t\t\t" + sqr +
+                                        "\t\t\t" + lat + "\t\t\t" + lon + "\t\t\t" + speed + "\n";
+                                writeServise.writeToFile(getModel(device), dataToWrite);
+                            }
 
                             mapHelper.addPoint(lat, lon, pit, speed, true);
 
@@ -551,13 +578,20 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, intentFilter);
     }
 
-    private void showSpeed(String speed) {
-        tvSpeed.setText(speed.substring(0,speed.indexOf(".") + 2));
-        this.speed = Float.valueOf(speed);
-        if (cbAuto.isChecked() && this.speed > 1){
-            seekBarSensativity.setProgress((int)(mapHelper.green_pin - (mapHelper.green_pin/this.speed)));
+
+
+
+
+    private void showSpeed(String device, String speed) {
+        if (device.equals(devicesList.get(0))) {
+            tvSpeed.setText(speed.substring(0, speed.indexOf(".") + 2));
+            this.speed = Float.valueOf(speed);
+            if (cbAuto.isChecked() && this.speed > MIN_DELTA_SPEED) {
+                seekBarSensativity.setProgress((int) (mapHelper.green_pin - (mapHelper.green_pin / this.speed) * 3));
+            }
         }
     }
+
 
 
     private void validatePit(float pit) {
@@ -584,6 +618,9 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     }
 
 
+
+
+
     private DeviceGraphInformation findDeviceOnGraph(String device) {
         for (DeviceGraphInformation information : devices)
             if (information.device.equals(device))
@@ -591,6 +628,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
         return null;
     }
+
+
 
 
     private XYMultipleSeriesRenderer getDemoRenderer() {
@@ -606,21 +645,31 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         renderer.setAntialiasing(true);
 
         renderer.setXAxisMin(0);
+        renderer.setXAxisMax(15);
         renderer.setYAxisMin(-5);
         renderer.setYAxisMax(20);
 
-        renderer.setAxesColor(Color.DKGRAY);
+        renderer.setAxesColor(Color.GREEN);
         renderer.setLabelsColor(Color.BLACK);
-        renderer.setYLabelsColor(0, Color.GREEN);
+
+        renderer.setXLabelsColor(Color.GREEN);
+        renderer.setShowGridX(true);
+        renderer.setGridColor(Color.GREEN);
 
         return renderer;
     }
+
+
+
 
 
     private XYMultipleSeriesDataset getDemoDataSet() {
         dataSet = new XYMultipleSeriesDataset();
         return dataSet;
     }
+
+
+
 
     private void createSeriesAndRendersForNewDevice(DeviceGraphInformation information) {
         try {
@@ -633,6 +682,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             e.printStackTrace();
         }
     }
+
+
 
     private void createAndAddSqrSeriesAndRenderer(DeviceGraphInformation information) {
         XYSeriesRenderer r = new XYSeriesRenderer();
@@ -653,6 +704,9 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         }
     }
 
+
+
+
     private void createAndAddZSeriesAndRenderer(DeviceGraphInformation information) {
         XYSeriesRenderer r = new XYSeriesRenderer();
         r.setColor(getRandomColor());
@@ -670,6 +724,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             dataSet.addSeries(devices.size(), zSeries);
         }
     }
+
 
     private void createAndAddYSeriesAndRenderer(DeviceGraphInformation information) {
         XYSeriesRenderer r = new XYSeriesRenderer();
@@ -764,7 +819,12 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     series = information.lffSeries;
                     seriesRenderer = information.lffSeriesRenderer;
                     break;
+
                 case R.id.rb_sqrt:
+                    series = information.sqrSeries;
+                    seriesRenderer = information.sqrSeriesRenderer;
+                    break;
+
                 default:
                     series = information.lffSeries;
                     seriesRenderer = information.lffSeriesRenderer;
@@ -809,6 +869,11 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             else
                 return false;
         }
+    }
+
+
+    private String getModel(String device) {
+        return device.substring(0, device.indexOf("-"));
     }
 
 }
