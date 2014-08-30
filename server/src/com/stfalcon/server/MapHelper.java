@@ -24,7 +24,7 @@ import java.util.Random;
  * Created by alexandr on 22.08.14.
  */
 public class MapHelper {
-    private static final double MIN_LOCATION_DIFFERENCE = 0.01;
+    private static final double MIN_LOCATION_DIFFERENCE = 0.000001;
 
     private MyActivity activity;
     private GoogleMap googleMap;
@@ -86,7 +86,7 @@ public class MapHelper {
 
 
     public void addPoint(double lat, double lon, float pit, double speed, boolean newPoint) {
-
+        // && speed > activity.MIN_DELTA_SPEED
         if (!newPoint || needAddMarker(lat, lon)) {
 
             MarkerOptions options = new MarkerOptions();

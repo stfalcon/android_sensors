@@ -34,10 +34,11 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private final static int MIN_VALUES_COUNT_PER_SECOND = 5;
     private final static int MAX_VALUES_COUNT_PER_SECOND = 30;
     private final static int MILLISECONDS_BEFORE_REFRESH_GRAPHS = 30;
-    private Button server, showMap, showConsole;
+    public final static int MIN_DELTA_SPEED = 5;
+    private Button server, showMap, showConsole, writeToFile;
     private ServiceConnection sConn;
     private WriteService writeServise;
-    private boolean bound = false;
+    private boolean bound = false, write = false;
     private Intent intentService;
     private BroadcastReceiver mReceiver;
     private TextView textView, tvFilterValue, tvFrequency;
@@ -77,7 +78,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         //full screen
         getActionBar().hide();
 
-        setContentBasedOnLayout();
+        setContentView(R.layout.main_land);
         mDecorView = getWindow().getDecorView();
 
         mapHelper = new MapHelper(this);
@@ -85,6 +86,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         server = (Button) findViewById(R.id.server);
         showMap = (Button) findViewById(R.id.show_map);
         showConsole = (Button) findViewById(R.id.show_console);
+        writeToFile = (Button) findViewById(R.id.write);
         textView = (TextView) findViewById(R.id.text);
         llChart = (LinearLayout) findViewById(R.id.chart);
         mapFragment = (View) findViewById(R.id.map);
@@ -99,12 +101,31 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         server.setOnClickListener(this);
         showMap.setOnClickListener(this);
         showConsole.setOnClickListener(this);
+        writeToFile.setOnClickListener(this);
         findViewById(R.id.clear).setOnClickListener(this);
         findViewById(R.id.pause).setOnClickListener(this);
         findViewById(R.id.plus).setOnClickListener(this);
         findViewById(R.id.minus).setOnClickListener(this);
         findViewById(R.id.screen_shot).setOnClickListener(this);
         findViewById(R.id.show_console).setOnClickListener(this);
+
+
+        radioGroup = (RadioGroup) findViewById(R.id.radio_group);
+
+        rbX = (CheckBox) findViewById(R.id.rb_x);
+        rbY = (CheckBox) findViewById(R.id.rb_y);
+        rbZ = (CheckBox) findViewById(R.id.rb_z);
+        rbSqrt = (CheckBox) findViewById(R.id.rb_sqrt);
+        rbLFF = (CheckBox) findViewById(R.id.rb_lff);
+
+        rbX.setOnCheckedChangeListener(this);
+        rbY.setOnCheckedChangeListener(this);
+        rbZ.setOnCheckedChangeListener(this);
+        rbSqrt.setOnCheckedChangeListener(this);
+        rbLFF.setOnCheckedChangeListener(this);
+
+        rbLFF.performClick();
+
 
         tvFrequency = (TextView) findViewById(R.id.tv_frequency);
         tvFilterValue = (TextView) findViewById(R.id.filter_value);
@@ -235,35 +256,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         }
     }
 
-    private void setContentBasedOnLayout() {
-        WindowManager winMan = (WindowManager) getSystemService(Context.WINDOW_SERVICE);
 
-        if (winMan != null) {
-            int orientation = winMan.getDefaultDisplay().getOrientation();
 
-            if (orientation == 0) {
-                // Portrait
-                setContentView(R.layout.main_land);
-            } else if (orientation == 1) {
-                // Landscape
-                setContentView(R.layout.main_land);
-
-                radioGroup = (RadioGroup) findViewById(R.id.radio_group);
-
-                rbX = (CheckBox) findViewById(R.id.rb_x);
-                rbY = (CheckBox) findViewById(R.id.rb_y);
-                rbZ = (CheckBox) findViewById(R.id.rb_z);
-                rbSqrt = (CheckBox) findViewById(R.id.rb_sqrt);
-                rbLFF = (CheckBox) findViewById(R.id.rb_lff);
-
-                rbX.setOnCheckedChangeListener(this);
-                rbY.setOnCheckedChangeListener(this);
-                rbZ.setOnCheckedChangeListener(this);
-                rbSqrt.setOnCheckedChangeListener(this);
-                rbLFF.setOnCheckedChangeListener(this);
-            }
-        }
-    }
 
 
     @Override
@@ -272,7 +266,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             switch (view.getId()) {
 
                 case R.id.server:
-                    //startActivity(new Intent(this, ConnectActivity.class));
                     writeServise.startServer();
                     break;
 
@@ -328,9 +321,20 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         showConsole.setText("Hide Console");
                     }
                     break;
+
+                case R.id.write:
+                    if (!write) {
+                        writeToFile.setText("Stop write");
+                        write = true;
+                    } else {
+                        writeToFile.setText("Write to file");
+                        write = false;
+                    }
+                    break;
             }
         }
     }
+
 
     private void makeScreenShot() {
         Bitmap bitmap;
@@ -363,6 +367,9 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             e.printStackTrace();
         }
     }
+
+
+
 
 
     /**
@@ -554,7 +561,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private void showSpeed(String speed) {
         tvSpeed.setText(speed.substring(0,speed.indexOf(".") + 2));
         this.speed = Float.valueOf(speed);
-        if (cbAuto.isChecked() && this.speed > 1){
+        if (cbAuto.isChecked() && this.speed > MIN_DELTA_SPEED){
             seekBarSensativity.setProgress((int)(mapHelper.green_pin - (mapHelper.green_pin/this.speed)));
         }
     }
@@ -764,7 +771,12 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     series = information.lffSeries;
                     seriesRenderer = information.lffSeriesRenderer;
                     break;
+
                 case R.id.rb_sqrt:
+                    series = information.sqrSeries;
+                    seriesRenderer = information.sqrSeriesRenderer;
+                    break;
+
                 default:
                     series = information.lffSeries;
                     seriesRenderer = information.lffSeriesRenderer;

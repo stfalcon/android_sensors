@@ -365,7 +365,8 @@ public class WriteService extends Service implements SensorEventListener {
 
         public void onLocationChanged(final Location loc) {
             Log.i("Loger", "Location changed");
-            if (isBetterLocation(loc, previousBestLocation)) previousBestLocation = loc;
+            previousBestLocation = loc;
+            //if (isBetterLocation(loc, previousBestLocation)) previousBestLocation = loc;
         }
 
         public void onProviderDisabled(String provider) {
