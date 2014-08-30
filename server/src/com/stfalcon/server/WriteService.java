@@ -129,6 +129,8 @@ public class WriteService extends Service {
             outputStream.get(device).write(data);
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (Exception i){
+            i.printStackTrace();
         }
     }
 

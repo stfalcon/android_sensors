@@ -51,6 +51,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private TextView tvConsole;
     private View mDecorView;
     private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private ArrayList<String> devicesList = new ArrayList<String>();
 
     private int filterValuePerSecond = 15, counter = 0; //in seconds
 
@@ -326,6 +327,14 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     if (!write) {
                         writeToFile.setText("Stop write");
                         write = true;
+                        if (write && bound) {
+                            for (String device : devicesList) {
+                                writeServise.createFileToWrite(device);
+                                String dataToWrite = "time" + "\t\t\t\t\t\t\t\t\t\t\t" + "x" + "\t\t\t\t\t" + "y" + "\t\t\t\t" + "z" + "\t\t\t\t" + "sqr" +
+                                        "\t\t\t\t\t\t\t" + "lat" + "\t\t\t\t\t\t" + "lon" + "\t\t\t\t\t" + "speed" + "\n";
+                                writeServise.writeToFile(device, dataToWrite);
+                            }
+                        }
                     } else {
                         writeToFile.setText("Write to file");
                         write = false;
@@ -405,13 +414,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         createSeriesAndRendersForNewDevice(information);
 
                         devices.add(information);
-
-                        if (write && bound) {
-                            writeServise.createFileToWrite(getModel(device));
-                            String dataToWrite = "time" + "\t\t\t\t\t\t\t\t\t\t\t" + "x" + "\t\t\t\t\t" + "y" + "\t\t\t\t" + "z" + "\t\t\t\t" + "sqr" +
-                                    "\t\t\t\t\t\t\t" + "lat" + "\t\t\t\t\t\t" + "lon" + "\t\t\t\t\t" + "speed" + "\n";
-                            writeServise.writeToFile(getModel(device), dataToWrite);
-                        }
+                        devicesList.add(getModel(device));
                     }
 
                     long currentTime = System.currentTimeMillis();
@@ -448,7 +451,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                         long graphTime = sendingTime + readDataTime;
 
-                        showSpeed(arr[6]);
+                        showSpeed(getModel(device), arr[6]);
 
                         //TODO:
                         float lff;
@@ -579,15 +582,15 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
 
 
-    private void showSpeed(String speed) {
-        tvSpeed.setText(speed.substring(0, speed.indexOf(".") + 2));
-        this.speed = Float.valueOf(speed);
-        if (cbAuto.isChecked() && this.speed > MIN_DELTA_SPEED) {
-            seekBarSensativity.setProgress((int) (mapHelper.green_pin - (mapHelper.green_pin / this.speed)));
+    private void showSpeed(String device, String speed) {
+        if (device.equals(devicesList.get(0))) {
+            tvSpeed.setText(speed.substring(0, speed.indexOf(".") + 2));
+            this.speed = Float.valueOf(speed);
+            if (cbAuto.isChecked() && this.speed > MIN_DELTA_SPEED) {
+                seekBarSensativity.setProgress((int) (mapHelper.green_pin - (mapHelper.green_pin / this.speed) * 3));
+            }
         }
     }
-
-
 
 
 
@@ -642,12 +645,16 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         renderer.setAntialiasing(true);
 
         renderer.setXAxisMin(0);
+        renderer.setXAxisMax(15);
         renderer.setYAxisMin(-5);
         renderer.setYAxisMax(20);
 
-        renderer.setAxesColor(Color.DKGRAY);
+        renderer.setAxesColor(Color.GREEN);
         renderer.setLabelsColor(Color.BLACK);
-        renderer.setYLabelsColor(0, Color.GREEN);
+
+        renderer.setXLabelsColor(Color.GREEN);
+        renderer.setShowGridX(true);
+        renderer.setGridColor(Color.GREEN);
 
         return renderer;
     }

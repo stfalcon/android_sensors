@@ -2,11 +2,9 @@ package com.stfalcon.server;
 
 import android.graphics.Bitmap;
 import android.provider.MediaStore;
-import android.util.Log;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -18,7 +16,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Random;
 
 /**
  * Created by alexandr on 22.08.14.
@@ -109,6 +106,11 @@ public class MapHelper {
             Marker marker = googleMap.addMarker(options);
             markers.add(marker);
 
+
+            googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(
+                    new CameraPosition.Builder().target(new LatLng(lat, lon))
+                    .build()));
+
         }
     }
 
@@ -131,30 +133,30 @@ public class MapHelper {
     }
 
 
-    private void repaintMarkers(){
+    private void repaintMarkers() {
         int count = markers.size();
 
         Marker marker;
 
-        for (int i = 0; i < count; i++){
+        for (int i = 0; i < count; i++) {
             marker = markers.get(i);
             try {
                 String[] arr = marker.getTitle().split(" ", 2);
                 float pit = Float.valueOf(arr[0]);
 
-                if (pit < green_pin){
+                if (pit < green_pin) {
                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.green_pin));
                 }
 
-                if (pit >= green_pin && pit <= yellow_pin){
+                if (pit >= green_pin && pit <= yellow_pin) {
                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.yellow_pin));
                 }
 
-                if (pit > yellow_pin){
+                if (pit > yellow_pin) {
                     marker.setIcon(BitmapDescriptorFactory.fromResource(R.drawable.red_pin));
                 }
 
-            } catch (NumberFormatException e){
+            } catch (NumberFormatException e) {
                 e.printStackTrace();
             }
         }
@@ -176,8 +178,6 @@ public class MapHelper {
 
         markers.clear();
     }
-
-
 
 
     public void snapshotMap() {

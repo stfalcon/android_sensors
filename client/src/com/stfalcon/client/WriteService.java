@@ -167,7 +167,7 @@ public class WriteService extends Service implements SensorEventListener {
 
         String serial = Build.SERIAL;
         serial = serial.substring(serial.length() - 3);
-        return Build.MODEL + "-" + serial + "-" + stringType;
+        return Build.MODEL + "+" + serial + "-" + stringType;
     }
 
 
