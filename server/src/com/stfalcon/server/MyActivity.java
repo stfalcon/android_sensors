@@ -408,6 +408,9 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                         if (write && bound) {
                             writeServise.createFileToWrite(getModel(device));
+                            String dataToWrite = "time" + "\t\t\t\t\t\t\t\t\t\t\t" + "x" + "\t\t\t\t\t" + "y" + "\t\t\t\t" + "z" + "\t\t\t\t" + "sqr" +
+                                    "\t\t\t\t\t\t\t" + "lat" + "\t\t\t\t\t\t" + "lon" + "\t\t\t\t\t" + "speed" + "\n";
+                            writeServise.writeToFile(getModel(device), dataToWrite);
                         }
                     }
 
@@ -498,8 +501,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                             if (write && bound) {
 
                                 String time = simpleDateFormat.format(System.currentTimeMillis());
-                                String dataToWrite = time + " x=" + x + " y=" + y + " z=" + z + " sqr=" + sqr +
-                                        " lat=" + lat + " lon=" + lon + " speed=" + speed + "\n";
+                                String dataToWrite = time + "\t\t\t" + x + "\t\t\t" + y + "\t\t\t" + z + "\t\t\t" + sqr +
+                                        "\t\t\t" + lat + "\t\t\t" + lon + "\t\t\t" + speed + "\n";
                                 writeServise.writeToFile(getModel(device), dataToWrite);
                             }
 
