@@ -38,10 +38,6 @@ public class WriteService extends Service implements SensorEventListener {
     private static final long SENDING_DATA_INTERVAL_IN_MILLIS = 1000;
 
     private int NOTIFICATION = 1000;
-    private OutputStreamWriter outputStreamWriterA;
-    private OutputStreamWriter outputStreamWriterS;
-    private OutputStreamWriter outputStreamWriterL;
-    private OutputStreamWriter outputStreamWriterGPS;
     public WriteBinder binder = new WriteBinder();
     public static final int TYPE_A = 0;   // ACCELEROMETER
     public static final int TYPE_F = 1;   // FILTRATE_ACCELEROMETER
@@ -89,41 +85,6 @@ public class WriteService extends Service implements SensorEventListener {
         startForeground(NOTIFICATION, makeNotification());
         Log.v("Loger", "START_DONE");
 
-        if (!createdConnectionWrapper) {
-
-            try {
-
-                File directory = new File("/sdcard/AccelData/");
-                directory.mkdirs();
-
-                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                String time = simpleDateFormat.format(System.currentTimeMillis());
-
-                File myFileA = new File("/sdcard/AccelData/" + time + "Data_ACCELEROMETER.txt");
-                myFileA.createNewFile();
-                FileOutputStream fOutA = new FileOutputStream(myFileA);
-
-                File myFileS = new File("/sdcard/AccelData/" + time + "Data_FILTRATE_ACCELEROMETER.txt");
-                myFileS.createNewFile();
-                FileOutputStream fOutS = new FileOutputStream(myFileS);
-
-                File myFileL = new File("/sdcard/AccelData/" + time + "Data_LINEAR_ACCELERATION.txt");
-                myFileL.createNewFile();
-                FileOutputStream fOutL = new FileOutputStream(myFileL);
-
-                File myFileGPS = new File("/sdcard/AccelData/" + time + "Data_GPS.txt");
-                myFileGPS.createNewFile();
-                FileOutputStream fOutGPS = new FileOutputStream(myFileGPS);
-
-                outputStreamWriterA = new OutputStreamWriter(fOutA);
-                outputStreamWriterS = new OutputStreamWriter(fOutS);
-                outputStreamWriterL = new OutputStreamWriter(fOutL);
-                outputStreamWriterGPS = new OutputStreamWriter(fOutGPS);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-        }
 
         locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         listener = new MyLocationListener();
@@ -145,20 +106,6 @@ public class WriteService extends Service implements SensorEventListener {
         sensorManager.unregisterListener(this);
 
         stopForeground(true);
-
-        if (!createdConnectionWrapper) {
-
-            try {
-                outputStreamWriterA.close();
-                outputStreamWriterS.close();
-                outputStreamWriterL.close();
-                outputStreamWriterGPS.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (NullPointerException e) {
-                e.printStackTrace();
-            }
-        }
 
         if (listener != null) {
             locationManager.removeUpdates(listener);
@@ -197,25 +144,6 @@ public class WriteService extends Service implements SensorEventListener {
                     lastSendingTime = time;
                     dataToSend.clear();
                 }
-            }
-        } else {
-            String loc = " lat" + previousBestLocation.getLatitude() + " " + "lon" + previousBestLocation.getLongitude();
-            try {
-                String location = String.valueOf(time) + loc + "\n";
-                outputStreamWriterGPS.write(location);
-                switch (type) {
-                    case TYPE_A:
-                        outputStreamWriterA.write(data);
-                        break;
-                    case TYPE_F:
-                        outputStreamWriterS.write(data);
-                        break;
-                    case TYPE_L:
-                        outputStreamWriterL.write(data);
-                        break;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }

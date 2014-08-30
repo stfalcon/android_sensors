@@ -11,7 +11,6 @@ import android.provider.Settings;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 import android.view.View;
-import android.view.WindowManager;
 import android.widget.*;
 import org.achartengine.ChartFactory;
 import org.achartengine.GraphicalView;
@@ -51,6 +50,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     private LinearLayout llConsole;
     private TextView tvConsole;
     private View mDecorView;
+    private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private int filterValuePerSecond = 15, counter = 0; //in seconds
 
@@ -69,7 +69,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
 
     /**
-     *
      * Called when the activity is first created.
      */
     @Override
@@ -173,12 +172,10 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
 
 
-
-
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
-        if(android.os.Build.VERSION.SDK_INT >= 19) {
+        if (android.os.Build.VERSION.SDK_INT >= 19) {
             if (hasFocus) {
                 mDecorView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE
                         | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
@@ -190,10 +187,11 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         }
     }
 
+
+
     private void updateFilterValue() {
         tvFilterValue.setText(String.valueOf(filterValuePerSecond));
     }
-
 
 
 
@@ -204,7 +202,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         registerReceiver();
         bindService(intentService, sConn, BIND_AUTO_CREATE);
     }
-
 
 
 
@@ -227,6 +224,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
     }
 
+
+
     @Override
     protected void onResume() {
         super.onResume();
@@ -247,6 +246,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         }
     }
 
+
+
     private void clearGraph() {
         if (graphicalView.isChartDrawn()) {
             renderer.removeAllRenderers();
@@ -255,7 +256,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             graphicalView.repaint();
         }
     }
-
 
 
 
@@ -329,11 +329,16 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                     } else {
                         writeToFile.setText("Write to file");
                         write = false;
+                        if (bound) {
+                            writeServise.stopWriteToFile();
+                        }
                     }
                     break;
             }
         }
     }
+
+
 
 
     private void makeScreenShot() {
@@ -389,9 +394,6 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
 
                 if (intent.hasExtra(SampleApplication.SENSOR)) {
-                    /*String s = textView.getText().toString();
-                    s = s + intent.getStringExtra(SampleApplication.SENSOR);
-                    textView.setText(s);*/
 
                     String device = intent.getStringExtra(SampleApplication.DEVICE);
 
@@ -403,6 +405,10 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
                         createSeriesAndRendersForNewDevice(information);
 
                         devices.add(information);
+
+                        if (write && bound) {
+                            writeServise.createFileToWrite(getModel(device));
+                        }
                     }
 
                     long currentTime = System.currentTimeMillis();
@@ -489,6 +495,14 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
                             validatePit(pit);
 
+                            if (write && bound) {
+
+                                String time = simpleDateFormat.format(System.currentTimeMillis());
+                                String dataToWrite = time + " x=" + x + " y=" + y + " z=" + z + " sqr=" + sqr +
+                                        " lat=" + lat + " lon=" + lon + " speed=" + speed + "\n";
+                                writeServise.writeToFile(getModel(device), dataToWrite);
+                            }
+
                             mapHelper.addPoint(lat, lon, pit, speed, true);
 
                             /*if (information.xSeries.getItemCount() == 0){
@@ -558,13 +572,20 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         LocalBroadcastManager.getInstance(this).registerReceiver(mReceiver, intentFilter);
     }
 
+
+
+
+
     private void showSpeed(String speed) {
-        tvSpeed.setText(speed.substring(0,speed.indexOf(".") + 2));
+        tvSpeed.setText(speed.substring(0, speed.indexOf(".") + 2));
         this.speed = Float.valueOf(speed);
-        if (cbAuto.isChecked() && this.speed > MIN_DELTA_SPEED){
-            seekBarSensativity.setProgress((int)(mapHelper.green_pin - (mapHelper.green_pin/this.speed)));
+        if (cbAuto.isChecked() && this.speed > MIN_DELTA_SPEED) {
+            seekBarSensativity.setProgress((int) (mapHelper.green_pin - (mapHelper.green_pin / this.speed)));
         }
     }
+
+
+
 
 
     private void validatePit(float pit) {
@@ -591,6 +612,9 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     }
 
 
+
+
+
     private DeviceGraphInformation findDeviceOnGraph(String device) {
         for (DeviceGraphInformation information : devices)
             if (information.device.equals(device))
@@ -598,6 +622,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
 
         return null;
     }
+
+
 
 
     private XYMultipleSeriesRenderer getDemoRenderer() {
@@ -624,10 +650,16 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
     }
 
 
+
+
+
     private XYMultipleSeriesDataset getDemoDataSet() {
         dataSet = new XYMultipleSeriesDataset();
         return dataSet;
     }
+
+
+
 
     private void createSeriesAndRendersForNewDevice(DeviceGraphInformation information) {
         try {
@@ -640,6 +672,8 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             e.printStackTrace();
         }
     }
+
+
 
     private void createAndAddSqrSeriesAndRenderer(DeviceGraphInformation information) {
         XYSeriesRenderer r = new XYSeriesRenderer();
@@ -660,6 +694,9 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
         }
     }
 
+
+
+
     private void createAndAddZSeriesAndRenderer(DeviceGraphInformation information) {
         XYSeriesRenderer r = new XYSeriesRenderer();
         r.setColor(getRandomColor());
@@ -677,6 +714,7 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             dataSet.addSeries(devices.size(), zSeries);
         }
     }
+
 
     private void createAndAddYSeriesAndRenderer(DeviceGraphInformation information) {
         XYSeriesRenderer r = new XYSeriesRenderer();
@@ -821,6 +859,11 @@ public class MyActivity extends Activity implements View.OnClickListener, Compou
             else
                 return false;
         }
+    }
+
+
+    private String getModel(String device) {
+        return device.substring(0, device.indexOf("-"));
     }
 
 }

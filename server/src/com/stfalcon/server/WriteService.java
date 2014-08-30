@@ -15,6 +15,11 @@ import com.stfalcon.server.connection.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 
 /**
@@ -22,6 +27,7 @@ import java.util.HashMap;
  */
 public class WriteService extends Service {
     public WriteBinder binder = new WriteBinder();
+    private HashMap<String, OutputStreamWriter> outputStream = new HashMap<String, OutputStreamWriter>();
 
 
     private boolean createdConnectionWrapper = false;
@@ -82,6 +88,62 @@ public class WriteService extends Service {
             intentTracking.putExtra(SampleApplication.STARTED, true);
             LocalBroadcastManager.getInstance(WriteService.this).sendBroadcast(intentTracking);
         }
+    }
+
+
+
+
+    /**
+     *
+     * @param device
+     */
+    public void createFileToWrite(String device){
+
+        try {
+
+            File directory = new File("/sdcard/AccelData/");
+            directory.mkdirs();
+
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String time = simpleDateFormat.format(System.currentTimeMillis());
+
+            File myFile = new File("/sdcard/AccelData/" + time + " " + device + ".txt");
+            myFile.createNewFile();
+            FileOutputStream fOut = new FileOutputStream(myFile);
+
+            outputStream.put(device, new OutputStreamWriter(fOut));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+
+    /**
+     *
+     * @param device
+     * @param data
+     */
+    public void writeToFile(String device, String data){
+        try {
+            outputStream.get(device).write(data);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    /**
+     *
+     */
+    public void stopWriteToFile(){
+       for (String device : outputStream.keySet()){
+           try {
+               outputStream.get(device).close();
+           } catch (IOException e) {
+               e.printStackTrace();
+           }
+       }
     }
 
 
